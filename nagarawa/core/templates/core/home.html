@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Hero -->
+  <div class="hero">
+    <h1 class="hero-title">Your voice for a<br/><span>better community</span></h1>
+    <p class="hero-sub">Report civic issues directly to the right departments. Track progress, engage with your community, and hold authorities accountable.</p>
+    <div class="hero-actions">
+      <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">Get Started</a>
+      <a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-lg">Browse Complaints</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="home-stats">
+    <div class="home-stat">
+      <div class="home-stat-num">{{ stats.total_complaints }}</div>
+      <div class="home-stat-label">Total Complaints</div>
+    </div>
+    <div class="home-stat">
+      <div class="home-stat-num" style="color:var(--success);">{{ stats.solved }}</div>
+      <div class="home-stat-label">Solved</div>
+    </div>
+    <div class="home-stat">
+      <div class="home-stat-num" style="color:var(--purple);">{{ stats.in_progress }}</div>
+      <div class="home-stat-label">In Progress</div>
+    </div>
+    <div class="home-stat">
+      <div class="home-stat-num" style="color:var(--accent);">{{ stats.total_users }}</div>
+      <div class="home-stat-label">Citizens</div>
+    </div>
+  </div>
+
+  <!-- Departments -->
+  <div style="text-align:center; margin-bottom:1rem;">
+    <h2 style="font-family:var(--font); font-size:1.3rem;">Report to any department</h2>
+    <p class="text-muted" style="font-size:0.9rem;">Choose the right authority for your complaint</p>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; margin-bottom:2.5rem;">
+    {% for dept in departments %}
+    <a href="{% url 'complaints:feed' %}?department={{ dept.id }}" style="display:flex; align-items:center; gap:0.5rem; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:0.5rem 1.1rem; font-size:0.88rem; color:var(--text); text-decoration:none; transition:box-shadow 0.15s;" onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='none'">
+      <span>{{ dept.icon }}</span> {{ dept.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Recent Complaints -->
+  <h2 style="font-family:var(--font); font-size:1.2rem; margin-bottom:1rem;">Recent Complaints</h2>
+  <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1rem; margin-bottom:2rem;">
+    {% for complaint in recent_complaints %}
+    <a href="{{ complaint.get_absolute_url }}" style="text-decoration:none;">
+      <div class="complaint-card" style="height:100%;">
+        <div class="complaint-body" style="padding-top:1rem;">
+          <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem; flex-wrap:wrap;">
+            {% if complaint.department %}<span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>{% endif %}
+            <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+          </div>
+          <div class="complaint-title" style="margin-bottom:0.35rem;">{{ complaint.title }}</div>
+          <div class="complaint-desc">{{ complaint.description }}</div>
+        </div>
+        <div class="complaint-footer">
+          <span class="footer-action" style="font-size:0.78rem;">▲ {{ complaint.upvote_count }} &nbsp; 💬 {{ complaint.comment_count }}</span>
+          <span class="ml-auto footer-action" style="font-size:0.78rem;">{{ complaint.created_at|naturaltime }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div style="text-align:center; margin-bottom:2rem;">
+    <a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-lg">View All Complaints →</a>
+  </div>
+</div>
+{% endblock %}

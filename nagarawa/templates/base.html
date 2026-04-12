@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Nagarawa{% endblock %} — Civic Complaint Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container nav-inner">
+    <a href="{% url 'core:home' %}" class="nav-brand">
+      <span class="brand-icon">🏛</span>
+      <span>Nagarawa</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">Feed</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'complaints:my_complaints' %}" class="nav-link">My Complaints</a>
+      {% endif %}
+    </div>
+
+    <div class="nav-actions">
+      {% if user.is_authenticated %}
+        <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">
+          <span>+</span> Post Complaint
+        </a>
+        <div class="nav-user-menu">
+          <button class="nav-user-btn" onclick="toggleUserMenu(this)">
+            {% if user.avatar %}
+              <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="nav-avatar" />
+            {% else %}
+              <span class="nav-avatar-placeholder">{{ user.username|first|upper }}</span>
+            {% endif %}
+            <span class="nav-username">{{ user.display_name }}</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="user-dropdown hidden">
+            <a href="{% url 'accounts:profile' username=user.username %}">Profile</a>
+            <a href="{% url 'accounts:profile_edit' %}">Edit Profile</a>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin Panel</a>{% endif %}
+            <hr />
+            <a href="{% url 'accounts:logout' %}" class="text-danger">Logout</a>
+          </div>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">Login</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Sign Up</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% if messages %}
+<div class="messages-container">
+  {% for msg in messages %}
+    <div class="message message-{{ msg.tags }}">
+      {{ msg }}
+      <button onclick="this.parentElement.remove()" class="msg-close">✕</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="brand-icon">🏛</span>
+    <span>Nagarawa — Civic Complaint Platform &copy; 2025</span>
+    <span class="footer-note">Powered by citizens, for citizens.</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+function toggleUserMenu(btn) {
+  const dropdown = btn.nextElementSibling;
+  dropdown.classList.toggle('hidden');
+  document.addEventListener('click', function closeMenu(e) {
+    if (!btn.contains(e.target)) {
+      dropdown.classList.add('hidden');
+      document.removeEventListener('click', closeMenu);
+    }
+  });
+}
+</script>
+</body>
+</html>

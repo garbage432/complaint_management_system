@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}{% if editing %}Edit Complaint{% else %}Post a Complaint{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:720px;">
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-header">
+      <h2 style="font-family:var(--font); font-size:1.2rem;">
+        {% if editing %}✏️ Edit Complaint{% else %}📢 Post a Complaint{% endif %}
+      </h2>
+      <p class="text-muted" style="font-size:0.85rem; margin-top:0.25rem;">
+        Help your community by reporting issues to the relevant departments.
+      </p>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          {{ form.title }}
+          {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Department *</label>
+          {{ form.department }}
+          {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description *</label>
+          {{ form.description }}
+          <div class="form-help">Describe the problem clearly. Include what, when, and severity.</div>
+          {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Photos (optional)</label>
+          {{ form.images }}
+          <div class="form-help">Attach photos of the issue (up to 5 images, 5MB each)</div>
+        </div>
+
+        <!-- Location Section -->
+        <div class="form-group">
+          <label class="form-label">📍 Location (optional)</label>
+          <div class="form-help" style="margin-bottom:0.5rem;">Click on the map to pin the exact location of the complaint.</div>
+          <div id="pick-map"></div>
+          <div style="margin-top:0.6rem;">
+            {{ form.location_name }}
+            <div class="form-help">Location name (auto-filled when you click the map, or type manually)</div>
+          </div>
+          {{ form.latitude }}
+          {{ form.longitude }}
+        </div>
+
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:0.6rem;">
+          {{ form.is_anonymous }}
+          <label class="form-label" style="margin:0; font-weight:500; cursor:pointer;">Post anonymously</label>
+          <span class="form-help">(your name will be hidden from other users)</span>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="form-error" style="margin-bottom:1rem;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:1rem;">
+          <a href="{% url 'complaints:feed' %}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            {% if editing %}Save Changes{% else %}Submit Complaint{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

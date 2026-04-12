@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Feed{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <form method="get">
+      <input type="text" name="q" class="form-input-sm filter-search" placeholder="Search complaints..." value="{{ filter_form.q.value|default:'' }}" />
+      {{ filter_form.department }}
+      {{ filter_form.status }}
+      {{ filter_form.sort }}
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      {% if request.GET %}<a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+  </div>
+
+  <div class="feed-layout">
+    <!-- Feed -->
+    <div>
+      {% if user.is_authenticated %}
+      <a href="{% url 'complaints:create' %}" class="card card-body mb-2" style="display:flex; align-items:center; gap:0.75rem; text-decoration:none; color:var(--text-muted); margin-bottom:1rem; transition:box-shadow 0.2s;">
+        {% if user.avatar %}
+          <img src="{{ user.avatar.url }}" class="complaint-author-avatar" style="text-decoration:none;" />
+        {% else %}
+          <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+        {% endif %}
+        <span style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:0.5rem 1rem; font-size:0.9rem;">Share a complaint or issue...</span>
+        <span class="btn btn-primary btn-sm">Post</span>
+      </a>
+      {% endif %}
+
+      <div class="feed-list">
+        {% for complaint in complaints %}
+        <div class="complaint-card" data-complaint="{{ complaint.id }}">
+          <!-- Header -->
+          <div class="complaint-card-header">
+            {% if complaint.is_anonymous %}
+              <span class="complaint-author-avatar" style="background:var(--text-muted);">?</span>
+            {% else %}
+              <a href="{% url 'accounts:profile' username=complaint.author.username %}" class="complaint-author-avatar">
+                {% if complaint.author.avatar %}<img src="{{ complaint.author.avatar.url }}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;" />
+                {% else %}{{ complaint.author.username|first|upper }}{% endif %}
+              </a>
+            {% endif %}
+            <div class="complaint-meta">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <span class="complaint-author-name">
+                  {% if complaint.is_anonymous %}Anonymous{% else %}{{ complaint.author.display_name }}{% endif %}
+                </span>
+                {% if complaint.department %}
+                  <span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>
+                {% endif %}
+                <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+              </div>
+              <div class="complaint-timestamp">{{ complaint.created_at|naturaltime }}</div>
+            </div>
+          </div>
+
+          <!-- Body -->
+          <div class="complaint-body">
+            <div class="complaint-title"><a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a></div>
+            <div class="complaint-desc">{{ complaint.description }}</div>
+            {% if complaint.location_name %}
+            <div class="complaint-location">📍 {{ complaint.location_name }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Images -->
+          {% if complaint.images.all %}
+          <div class="complaint-images">
+            {% for img in complaint.images.all|slice:":3" %}
+            <img src="{{ img.image.url }}" alt="Complaint image" onclick="window.location='{{ complaint.get_absolute_url }}'" />
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Footer -->
+          <div class="complaint-footer">
+            <div class="vote-group">
+              {% if user.is_authenticated %}
+                <button class="vote-btn vote-up {% if complaint.user_vote == 1 %}active-up{% endif %}" onclick="handleVote({{ complaint.id }}, 1)" title="Upvote">
+                  ▲ <span>{{ complaint.upvote_count }}</span>
+                </button>
+                <span class="vote-score">{{ complaint.vote_score }}</span>
+                <button class="vote-btn vote-down {% if complaint.user_vote == -1 %}active-down{% endif %}" onclick="handleVote({{ complaint.id }}, -1)" title="Downvote">
+                  ▼ <span>{{ complaint.downvote_count }}</span>
+                </button>
+              {% else %}
+                <span class="footer-action">▲ {{ complaint.upvote_count }} &nbsp; ▼ {{ complaint.downvote_count }}</span>
+              {% endif %}
+            </div>
+
+            <a href="{{ complaint.get_absolute_url }}#comments" class="footer-action" style="color:var(--text-muted); text-decoration:none;">
+              💬 {{ complaint.comment_count }}
+            </a>
+
+            <span class="footer-action">👁 {{ complaint.view_count }}</span>
+
+            <span class="ml-auto">
+              <a href="{{ complaint.get_absolute_url }}" class="btn btn-ghost btn-sm">View →</a>
+            </span>
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>No complaints found. <a href="{% url 'complaints:create' %}">Be the first to post one.</a></p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if complaints.has_other_pages %}
+      <div class="pagination">
+        {% if complaints.has_previous %}
+          <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ complaints.previous_page_number }}" class="page-btn">← Prev</a>
+        {% endif %}
+        {% for num in complaints.paginator.page_range %}
+          {% if complaints.number == num %}
+            <span class="page-btn active">{{ num }}</span>
+          {% elif num|add:'-2' <= complaints.number and num|add:'2' >= complaints.number %}
+            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" class="page-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if complaints.has_next %}
+          <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ complaints.next_page_number }}" class="page-btn">Next →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">Departments</div>
+        <div class="dept-list">
+          {% for dept in departments %}
+          <a href="?department={{ dept.id }}" class="dept-item">
+            <span class="dept-icon">{{ dept.icon }}</span>
+            <span>{{ dept.name }}</span>
+            <span class="dept-count">{{ dept.complaint_count }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if user.is_authenticated %}
+      <div class="sidebar-card">
+        <div class="sidebar-title">Quick Actions</div>
+        <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm btn-block mb-1">+ Post Complaint</a>
+        <a href="{% url 'complaints:my_complaints' %}" class="btn btn-ghost btn-sm btn-block">My Complaints</a>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ complaint.title }}{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="container">
+  <div class="detail-layout">
+    <!-- Main -->
+    <div class="detail-main">
+
+      <!-- Complaint Card -->
+      <div class="detail-card" data-complaint="{{ complaint.id }}">
+        <div class="detail-header">
+          <!-- Author row -->
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.85rem;">
+            {% if complaint.is_anonymous %}
+              <span class="complaint-author-avatar" style="background:var(--text-muted); width:42px; height:42px; font-size:1rem;">?</span>
+              <div>
+                <div style="font-weight:600;">Anonymous</div>
+                <div style="font-size:0.8rem;color:var(--text-light);">{{ complaint.created_at|naturaltime }}</div>
+              </div>
+            {% else %}
+              <a href="{% url 'accounts:profile' username=complaint.author.username %}" class="complaint-author-avatar" style="width:42px;height:42px;font-size:1rem;text-decoration:none;">
+                {% if complaint.author.avatar %}<img src="{{ complaint.author.avatar.url }}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" />
+                {% else %}{{ complaint.author.username|first|upper }}{% endif %}
+              </a>
+              <div>
+                <a href="{% url 'accounts:profile' username=complaint.author.username %}" style="font-weight:600;color:var(--text);text-decoration:none;">{{ complaint.author.display_name }}</a>
+                <div style="font-size:0.8rem;color:var(--text-light);">{{ complaint.created_at|naturaltime }}</div>
+              </div>
+            {% endif %}
+
+            <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap;">
+              {% if complaint.department %}
+                <span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>
+              {% endif %}
+              <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+            </div>
+          </div>
+
+          <h1 class="detail-title">{{ complaint.title }}</h1>
+
+          {% if complaint.location_name %}
+          <div class="complaint-location" style="font-size:0.88rem;">📍 {{ complaint.location_name }}</div>
+          {% endif %}
+        </div>
+
+        <div class="detail-body">
+          <div class="detail-desc">{{ complaint.description }}</div>
+
+          {% if complaint.images.all %}
+          <div class="detail-images">
+            {% for img in complaint.images.all %}
+            <img src="{{ img.image.url }}" alt="Complaint image" />
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if complaint.has_location %}
+          <div style="margin-top:1.25rem;">
+            <div style="font-size:0.82rem; font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em;">Location</div>
+            <div id="complaint-map"></div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="detail-footer">
+          <div class="vote-group">
+            {% if user.is_authenticated %}
+              <button class="vote-btn vote-up {% if user_vote == 1 %}active-up{% endif %}" onclick="handleVote({{ complaint.id }}, 1)">▲ {{ complaint.upvote_count }}</button>
+              <span class="vote-score">{{ complaint.vote_score }}</span>
+              <button class="vote-btn vote-down {% if user_vote == -1 %}active-down{% endif %}" onclick="handleVote({{ complaint.id }}, -1)">▼ {{ complaint.downvote_count }}</button>
+            {% else %}
+              <span class="footer-action">▲ {{ complaint.upvote_count }} &nbsp;·&nbsp; ▼ {{ complaint.downvote_count }}</span>
+            {% endif %}
+          </div>
+          <span class="footer-action">👁 {{ complaint.view_count }} views</span>
+          <span class="footer-action">💬 {{ complaint.comment_count }} comments</span>
+
+          {% if request.user == complaint.author and complaint.status == 'pending' %}
+          <span class="ml-auto">
+            <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="comments-section" id="comments">
+        <div class="comments-title">💬 Comments ({{ complaint.comment_count }})</div>
+
+        {% if user.is_authenticated %}
+        <div class="comment-form-wrap">
+          {% csrf_token %}
+          <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
+            {% csrf_token %}
+            {{ comment_form.body }}
+            <div style="display:flex; justify-content:flex-end; margin-top:0.5rem;">
+              <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+            </div>
+          </form>
+        </div>
+        {% else %}
+        <p class="text-muted" style="margin-bottom:1rem;font-size:0.9rem;"><a href="{% url 'accounts:login' %}">Login</a> to leave a comment.</p>
+        {% endif %}
+
+        <div class="comment-list">
+          {% for comment in comments %}
+          <div class="comment-item">
+            <a href="{% url 'accounts:profile' username=comment.author.username %}" class="comment-avatar">
+              {% if comment.author.avatar %}<img src="{{ comment.author.avatar.url }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+              {% else %}{{ comment.author.username|first|upper }}{% endif %}
+            </a>
+            <div class="comment-bubble">
+              <div class="comment-meta">
+                <a href="{% url 'accounts:profile' username=comment.author.username %}" class="comment-author">{{ comment.author.display_name }}</a>
+                <span class="comment-time">{{ comment.created_at|naturaltime }}</span>
+              </div>
+              <div class="comment-body">{{ comment.body }}</div>
+              <div class="comment-actions">
+                {% if user.is_authenticated %}
+                <button class="comment-action-btn" onclick="toggleReply({{ comment.id }})">Reply</button>
+                {% endif %}
+                {% if user == comment.author %}
+                <form method="post" action="{% url 'comments:delete' pk=comment.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="comment-action-btn text-danger" onclick="return confirm('Delete this comment?')">Delete</button>
+                </form>
+                {% endif %}
+              </div>
+
+              <!-- Reply Form -->
+              {% if user.is_authenticated %}
+              <div class="reply-form" id="reply-form-{{ comment.id }}">
+                <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="parent_id" value="{{ comment.id }}" />
+                  <textarea name="body" class="form-input" rows="2" placeholder="Write a reply..." style="margin-top:0.5rem;"></textarea>
+                  <div style="display:flex; gap:0.5rem; margin-top:0.4rem; justify-content:flex-end;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReply({{ comment.id }})">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Reply</button>
+                  </div>
+                </form>
+              </div>
+              {% endif %}
+
+              <!-- Replies -->
+              {% if comment.replies.all %}
+              <div class="replies">
+                {% for reply in comment.replies.all %}
+                {% if reply.is_approved %}
+                <div class="comment-item">
+                  <a href="{% url 'accounts:profile' username=reply.author.username %}" class="comment-avatar" style="width:26px;height:26px;font-size:0.7rem;">
+                    {% if reply.author.avatar %}<img src="{{ reply.author.avatar.url }}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;" />
+                    {% else %}{{ reply.author.username|first|upper }}{% endif %}
+                  </a>
+                  <div class="comment-bubble">
+                    <div class="comment-meta">
+                      <a href="{% url 'accounts:profile' username=reply.author.username %}" class="comment-author">{{ reply.author.display_name }}</a>
+                      <span class="comment-time">{{ reply.created_at|naturaltime }}</span>
+                    </div>
+                    <div class="comment-body">{{ reply.body }}</div>
+                    {% if user == reply.author %}
+                    <div class="comment-actions">
+                      <form method="post" action="{% url 'comments:delete' pk=reply.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="comment-action-btn text-danger" onclick="return confirm('Delete?')">Delete</button>
+                      </form>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state" style="padding:1.5rem;">
+            <p>No comments yet. Be the first!</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Status Timeline -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">Status Timeline</div>
+        <div class="status-timeline">
+          {% for log in complaint.status_logs.all %}
+          <div class="timeline-item">
+            <div class="timeline-dot" style="background:
+              {% if log.new_status == 'solved' %}var(--success)
+              {% elif log.new_status == 'rejected' %}var(--danger)
+              {% elif log.new_status == 'in_progress' %}var(--purple)
+              {% elif log.new_status == 'verified' %}var(--info)
+              {% else %}var(--accent){% endif %};"></div>
+            <div class="timeline-content">
+              <div class="timeline-status">{% load complaint_tags %}{{ log.new_status|status_label }}</div>
+              <div class="timeline-time">{{ log.created_at|naturaltime }}</div>
+              {% if log.note %}<div class="timeline-note">{{ log.note }}</div>{% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted" style="font-size:0.85rem;">No updates yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Complaint Info -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">Info</div>
+        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
+          {% if complaint.department %}
+          <div><span class="text-muted">Department:</span> <strong>{{ complaint.department.icon }} {{ complaint.department.name }}</strong></div>
+          {% endif %}
+          <div><span class="text-muted">Status:</span> <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span></div>
+          <div><span class="text-muted">Posted:</span> {{ complaint.created_at|date:"M d, Y" }}</div>
+          <div><span class="text-muted">Views:</span> {{ complaint.view_count }}</div>
+          <div><span class="text-muted">Score:</span> {{ complaint.vote_score }}</div>
+        </div>
+      </div>
+
+      <a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-sm btn-block">← Back to Feed</a>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if complaint.has_location %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initDetailMap({{ complaint.latitude }}, {{ complaint.longitude }}, "{{ complaint.location_name|escapejs }}");
+  });
+</script>
+{% endif %}
+{% endblock %}
