@@ -1,10 +1,14 @@
 from django.contrib import admin
-from .models import Department
+from .models import Department, UserProfile
 
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'icon', 'color', 'is_active', 'complaint_count']
-    list_filter = ['is_active']
-    search_fields = ['name']
-    prepopulated_fields = {'slug': ('name',)}
+    list_display = ("name", "is_active", "created_at")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "department", "is_department_admin")
+    list_filter = ("department", "is_department_admin")
