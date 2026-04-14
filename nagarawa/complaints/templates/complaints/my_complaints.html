@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}My Complaints{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+    <h1 style="font-family:var(--font); font-size:1.4rem;">My Complaints</h1>
+    <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">+ New Complaint</a>
+  </div>
+
+  <div class="my-list">
+    {% for complaint in complaints %}
+    <div class="my-item">
+      {% if complaint.department %}
+      <span style="font-size:1.5rem;">{{ complaint.department.icon }}</span>
+      {% endif %}
+      <div class="my-item-main">
+        <div class="my-item-title"><a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a></div>
+        <div class="my-item-meta">
+          {{ complaint.department.name|default:"No Department" }} &middot; {{ complaint.created_at|naturaltime }} &middot; {{ complaint.comment_count }} comments
+        </div>
+      </div>
+      <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+      {% if complaint.status == 'pending' %}
+      <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>You haven't posted any complaints yet.</p>
+      <a href="{% url 'complaints:create' %}" class="btn btn-primary mt-2">Post Your First Complaint</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

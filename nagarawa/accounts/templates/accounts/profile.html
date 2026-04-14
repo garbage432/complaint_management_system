@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ profile_user.display_name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px;">
+  <div class="profile-header">
+    {% if profile_user.avatar %}
+      <img src="{{ profile_user.avatar.url }}" class="profile-avatar" alt="{{ profile_user.username }}" />
+    {% else %}
+      <div class="profile-avatar-placeholder">{{ profile_user.username|first|upper }}</div>
+    {% endif %}
+    <div style="flex:1;">
+      <div class="profile-name">{{ profile_user.display_name }}</div>
+      <div class="profile-meta">@{{ profile_user.username }}
+        {% if profile_user.district %} · {{ profile_user.district }}{% endif %}
+        {% if profile_user.is_verified %} · ✅ Verified{% endif %}
+      </div>
+      {% if profile_user.bio %}<p style="margin-top:0.5rem; font-size:0.9rem; color:var(--text-muted);">{{ profile_user.bio }}</p>{% endif %}
+      <div style="display:flex; gap:1rem; margin-top:0.6rem; font-size:0.85rem; color:var(--text-muted);">
+        <span><strong style="color:var(--text);">{{ profile_user.complaint_count }}</strong> complaints</span>
+        <span>Joined {{ profile_user.date_joined|date:"M Y" }}</span>
+      </div>
+    </div>
+    {% if request.user == profile_user %}
+    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-ghost btn-sm">Edit Profile</a>
+    {% endif %}
+  </div>
+
+  <h2 class="section-title">Recent Complaints</h2>
+  <div class="feed-list">
+    {% for complaint in complaints %}
+    <div class="complaint-card" data-complaint="{{ complaint.id }}" style="margin-bottom:0.75rem;">
+      <div class="complaint-body" style="padding-top:1rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+          {% if complaint.department %}<span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>{% endif %}
+          <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+        </div>
+        <div class="complaint-title"><a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a></div>
+        <div class="complaint-desc">{{ complaint.description }}</div>
+        <div style="font-size:0.8rem; color:var(--text-light); margin-top:0.4rem;">{{ complaint.created_at|naturaltime }}</div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state"><p>No complaints posted yet.</p></div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
