@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ department.name }} — Admin{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:960px;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+    <div>
+      <h1 style="font-family:var(--font); font-size:1.4rem; margin:0 0 4px;">
+        {{ department.icon }} {{ department.name }}
+      </h1>
+      <p class="text-muted" style="font-size:0.85rem; margin:0;">Department admin dashboard</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:1.5rem;">
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Total</div>
+      <div style="font-size:1.5rem; font-weight:600;">{{ total }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Pending</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--warning);">{{ pending_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Verified</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--info);">{{ verified_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">In Progress</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--purple, #7c3aed);">{{ in_progress_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Solved</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--success);">{{ solved_count }}</div>
+    </div>
+  </div>
+
+  <!-- Status filter -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.25rem;">
+    <a href="?" class="btn {% if not selected_status %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+    <a href="?status=pending"     class="btn {% if selected_status == 'pending' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Pending</a>
+    <a href="?status=verified"    class="btn {% if selected_status == 'verified' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Verified</a>
+    <a href="?status=in_progress" class="btn {% if selected_status == 'in_progress' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">In Progress</a>
+    <a href="?status=solved"      class="btn {% if selected_status == 'solved' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Solved</a>
+    <a href="?status=rejected"    class="btn {% if selected_status == 'rejected' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Rejected</a>
+  </div>
+
+  <!-- Complaint list -->
+  <div class="my-list">
+    {% for complaint in complaints %}
+    <div class="card card-body" style="margin-bottom:0.75rem; padding:1rem;">
+
+      <!-- Top row -->
+      <div style="display:flex; align-items:flex-start; gap:12px;">
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+            <a href="{{ complaint.get_absolute_url }}" style="font-weight:600; font-size:0.95rem; color:var(--text);">{{ complaint.title }}</a>
+            <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+          </div>
+          <div class="text-muted" style="font-size:0.82rem;">
+            {% if complaint.is_anonymous %}<em>Anonymous</em>{% else %}{{ complaint.author.display_name }}{% endif %}
+            &middot; {{ complaint.created_at|naturaltime }}
+            &middot; 💬 {{ complaint.comment_count }}
+            &middot; 👁 {{ complaint.view_count }}
+            {% if complaint.location_name %}&middot; 📍 {{ complaint.location_name }}{% endif %}
+          </div>
+        </div>
+
+        <!-- Quick view button -->
+        <a href="{{ complaint.get_absolute_url }}" class="btn btn-ghost btn-sm" style="flex-shrink:0;">View →</a>
+      </div>
+
+      <!-- Status update form -->
+      <div style="margin-top:0.85rem; padding-top:0.85rem; border-top:1px solid var(--border); display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;">
+        <form method="post" action="{% url 'accounts:update_status' pk=complaint.pk %}" style="display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; flex:1;">
+          {% csrf_token %}
+
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <label class="text-muted" style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">Change Status</label>
+            <select name="status" class="form-input-sm">
+              <option value="pending"     {% if complaint.status == 'pending' %}selected{% endif %}>Pending</option>
+              <option value="verified"    {% if complaint.status == 'verified' %}selected{% endif %}>Verified</option>
+              <option value="in_progress" {% if complaint.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+              <option value="solved"      {% if complaint.status == 'solved' %}selected{% endif %}>Solved</option>
+              <option value="rejected"    {% if complaint.status == 'rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:180px;">
+            <label class="text-muted" style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;">Note (optional)</label>
+            <input type="text" name="note" class="form-input-sm" placeholder="e.g. Team dispatched, under review..." style="width:100%;" />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm">Update</button>
+        </form>
+
+        <!-- Reject shortcut -->
+        {% if complaint.status != 'rejected' %}
+        <form method="post" action="{% url 'accounts:update_status' pk=complaint.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="status" value="rejected" />
+          <input type="hidden" name="note" value="Rejected by department admin." />
+          <button type="submit" class="btn btn-ghost btn-sm text-danger" onclick="return confirm('Reject this complaint?')">Reject</button>
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Status history (collapsed) -->
+      {% if complaint.status_logs.all %}
+      <details style="margin-top:0.75rem;">
+        <summary class="text-muted" style="font-size:0.8rem; cursor:pointer;">Show status history ({{ complaint.status_logs.count }})</summary>
+        <div style="margin-top:0.5rem; display:flex; flex-direction:column; gap:6px;">
+          {% for log in complaint.status_logs.all %}
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.82rem;">
+            <span class="status-badge status-{{ log.new_status }}">{{ log.new_status }}</span>
+            <span class="text-muted">{{ log.created_at|naturaltime }}</span>
+            {% if log.note %}<span style="color:var(--text);">— {{ log.note }}</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
+
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>No complaints {% if selected_status %}with this status{% endif %} yet.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

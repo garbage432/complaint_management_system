@@ -8,6 +8,8 @@ from .models import Complaint, Vote, ComplaintImage, StatusLog
 from .forms import ComplaintForm, ComplaintFilterForm
 from comments.models import Comment
 from comments.forms import CommentForm
+from django.utils import timezone
+from django.db import models
 
 
 def feed_view(request):
@@ -18,15 +20,19 @@ def feed_view(request):
         dept = form.cleaned_data.get('department')
         status = form.cleaned_data.get('status')
         sort = form.cleaned_data.get('sort') or '-created_at'
-        q = form.cleaned_data.get('q')
+        q = request.GET.get('q', '').strip()
+        if q:
+           complaints = complaints.filter(
+            models.Q(title__icontains=q) |
+            models.Q(description__icontains=q) |
+            models.Q(location_name__icontains=q)
+    )
 
         if dept:
             complaints = complaints.filter(department=dept)
         if status:
             complaints = complaints.filter(status=status)
-        if q:
-            complaints = complaints.filter(Q(title__icontains=q) | Q(description__icontains=q))
-        complaints = complaints.order_by(sort)
+        
     else:
         complaints = complaints.order_by('-created_at')
 
@@ -58,6 +64,7 @@ def complaint_detail(request, pk):
     comments = complaint.comments.filter(is_approved=True, parent=None).select_related('author').prefetch_related('replies__author')
     comment_form = CommentForm()
     user_vote = complaint.get_user_vote(request.user)
+    today= timezone.now().date(),
 
     return render(request, 'complaints/detail.html', {
         'complaint': complaint,

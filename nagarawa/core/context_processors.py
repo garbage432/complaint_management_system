@@ -7,3 +7,9 @@ def global_context(request):
         'departments': Department.objects.filter(is_active=True),
         'pending_count': Complaint.objects.filter(status='pending').count(),
     }
+def notifications(request):
+    if request.user.is_authenticated:
+        return {
+            'unread_count': request.user.notifications.filter(is_read=False).count()
+        }
+    return {'unread_count': 0}
