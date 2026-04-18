@@ -32,11 +32,21 @@
               </div>
             {% endif %}
 
-            <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
               {% if complaint.department %}
                 <span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>
               {% endif %}
               <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+              <!-- Priority badge -->
+              {% if complaint.priority %}
+              <span class="status-badge" style="
+                background:{% if complaint.priority == 'urgent' %}var(--danger){% elif complaint.priority == 'high' %}var(--warning){% elif complaint.priority == 'medium' %}var(--info){% else %}var(--border){% endif %};
+                color:{% if complaint.priority == 'urgent' or complaint.priority == 'high' %}#fff{% else %}var(--text){% endif %};
+                font-size:0.72rem;">
+                {% if complaint.priority == 'urgent' %}🔴{% elif complaint.priority == 'high' %}🟠{% elif complaint.priority == 'medium' %}🔵{% else %}⚪{% endif %}
+                {{ complaint.priority|capfirst }}
+              </span>
+              {% endif %}
             </div>
           </div>
 
@@ -44,6 +54,13 @@
 
           {% if complaint.location_name %}
           <div class="complaint-location" style="font-size:0.88rem;">📍 {{ complaint.location_name }}</div>
+          {% endif %}
+
+          {% if complaint.due_date %}
+          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
+            ⏰ Due: <strong style="color:{% if complaint.due_date < today %}var(--danger){% else %}var(--text){% endif %};">{{ complaint.due_date|date:"M d, Y" }}</strong>
+            {% if complaint.due_date < today %}<span style="color:var(--danger); font-size:0.75rem;">— Overdue</span>{% endif %}
+          </div>
           {% endif %}
         </div>
 
@@ -79,13 +96,59 @@
           <span class="footer-action">👁 {{ complaint.view_count }} views</span>
           <span class="footer-action">💬 {{ complaint.comment_count }} comments</span>
 
-          {% if request.user == complaint.author and complaint.status == 'pending' %}
-          <span class="ml-auto">
-            <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+          <span class="ml-auto" style="display:flex; gap:0.5rem;">
+            {% if request.user == complaint.author and complaint.status == 'pending' %}
+              <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'accounts:withdraw_complaint' pk=complaint.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger"
+                        onclick="return confirm('Withdraw this complaint? This cannot be undone.')">Withdraw</button>
+              </form>
+            {% endif %}
           </span>
-          {% endif %}
         </div>
       </div>
+
+      <!-- Rate resolution (only author, only when solved, only once) -->
+      {% if request.user == complaint.author and complaint.status == 'solved' %}
+      <div class="card card-body" style="margin-bottom:1rem; padding:1rem;">
+        {% if complaint.rating %}
+          <div style="font-weight:600; margin-bottom:6px;">Your rating</div>
+          <div style="font-size:1.2rem; margin-bottom:4px;">
+            {% for i in "12345" %}{% if forloop.counter <= complaint.rating.stars %}⭐{% else %}☆{% endif %}{% endfor %}
+            <span style="font-size:0.85rem; color:var(--text-muted);">{{ complaint.rating.stars }}/5</span>
+          </div>
+          {% if complaint.rating.feedback %}
+          <div class="text-muted" style="font-size:0.85rem;">{{ complaint.rating.feedback }}</div>
+          {% endif %}
+        {% else %}
+          <div style="font-weight:600; margin-bottom:0.5rem;">Rate this resolution</div>
+          <p class="text-muted" style="font-size:0.82rem; margin-bottom:0.75rem;">How satisfied are you with how this complaint was handled?</p>
+          <form method="post" action="{% url 'accounts:rate_complaint' pk=complaint.pk %}">
+            {% csrf_token %}
+            <div style="display:flex; gap:4px; margin-bottom:0.6rem;" id="star-row">
+              {% for i in "12345" %}
+              <label style="cursor:pointer; font-size:1.6rem; line-height:1;" title="{{ i }} star{% if i != '1' %}s{% endif %}">
+                <input type="radio" name="stars" value="{{ i }}" required style="display:none;" onchange="highlightStars({{ i }})" />
+                <span class="star" data-val="{{ i }}">☆</span>
+              </label>
+              {% endfor %}
+            </div>
+            <textarea name="feedback" class="form-input" rows="2"
+                      placeholder="Optional feedback on how this was resolved..."
+                      style="margin-bottom:0.5rem;"></textarea>
+            <button type="submit" class="btn btn-primary btn-sm">Submit Rating</button>
+          </form>
+          <script>
+            function highlightStars(val) {
+              document.querySelectorAll('.star').forEach(s => {
+                s.textContent = parseInt(s.dataset.val) <= val ? '⭐' : '☆';
+              });
+            }
+          </script>
+        {% endif %}
+      </div>
+      {% endif %}
 
       <!-- Comments -->
       <div class="comments-section" id="comments">
@@ -93,7 +156,6 @@
 
         {% if user.is_authenticated %}
         <div class="comment-form-wrap">
-          {% csrf_token %}
           <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
             {% csrf_token %}
             {{ comment_form.body }}
@@ -131,7 +193,6 @@
                 {% endif %}
               </div>
 
-              <!-- Reply Form -->
               {% if user.is_authenticated %}
               <div class="reply-form" id="reply-form-{{ comment.id }}">
                 <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
@@ -146,7 +207,6 @@
               </div>
               {% endif %}
 
-              <!-- Replies -->
               {% if comment.replies.all %}
               <div class="replies">
                 {% for reply in comment.replies.all %}
@@ -191,6 +251,7 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
+
       <!-- Status Timeline -->
       <div class="sidebar-card">
         <div class="sidebar-title">Status Timeline</div>
@@ -223,11 +284,40 @@
           <div><span class="text-muted">Department:</span> <strong>{{ complaint.department.icon }} {{ complaint.department.name }}</strong></div>
           {% endif %}
           <div><span class="text-muted">Status:</span> <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span></div>
+          {% if complaint.priority %}
+          <div><span class="text-muted">Priority:</span> <strong>{{ complaint.priority|capfirst }}</strong></div>
+          {% endif %}
+          {% if complaint.due_date %}
+          <div><span class="text-muted">Due:</span> <strong>{{ complaint.due_date|date:"M d, Y" }}</strong></div>
+          {% endif %}
           <div><span class="text-muted">Posted:</span> {{ complaint.created_at|date:"M d, Y" }}</div>
           <div><span class="text-muted">Views:</span> {{ complaint.view_count }}</div>
           <div><span class="text-muted">Score:</span> {{ complaint.vote_score }}</div>
+          {% if complaint.rating %}
+          <div><span class="text-muted">Rating:</span>
+            {% for i in "12345" %}{% if forloop.counter <= complaint.rating.stars %}⭐{% else %}☆{% endif %}{% endfor %}
+          </div>
+          {% endif %}
         </div>
       </div>
+
+      <!-- Assigned to -->
+      {% if complaint.assignment %}
+      <div class="sidebar-card">
+        <div class="sidebar-title">Assigned To</div>
+        <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
+          <span class="complaint-author-avatar" style="width:30px;height:30px;font-size:0.75rem;">
+            {{ complaint.assignment.assigned_to.username|first|upper }}
+          </span>
+          <div>
+            <div style="font-weight:600;">{{ complaint.assignment.assigned_to.display_name }}</div>
+            {% if complaint.assignment.note %}
+            <div class="text-muted" style="font-size:0.78rem;">{{ complaint.assignment.note }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
 
       <a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-sm btn-block">← Back to Feed</a>
     </aside>
@@ -243,4 +333,5 @@
   });
 </script>
 {% endif %}
+
 {% endblock %}

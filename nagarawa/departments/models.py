@@ -78,3 +78,10 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+    @property
+    def role(self):
+       if self.user.is_superuser:
+          return "superadmin"
+       if self.is_department_admin:
+          return "deptadmin"
+       return "user"

@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Complaint, Vote, ComplaintImage, StatusLog
-
+from .models import Complaint,Vote, ComplaintImage, StatusLog, InternalNote, ComplaintAssignment, ComplaintRating, Notification
 
 class ComplaintImageInline(admin.TabularInline):
     model = ComplaintImage
@@ -117,3 +116,12 @@ class StatusLogAdmin(admin.ModelAdmin):
     list_filter = ['new_status', 'created_at']
     search_fields = ['complaint__title', 'changed_by__username']
     readonly_fields = ['complaint', 'changed_by', 'old_status', 'new_status', 'note', 'created_at']
+
+
+
+
+
+admin.site.register(InternalNote)
+admin.site.register(ComplaintAssignment)
+admin.site.register(ComplaintRating)
+admin.site.register(Notification)
