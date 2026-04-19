@@ -99,15 +99,24 @@ from departments.models import Department
 
 @login_required
 def superadmin_dashboard(request):
+    from messaging.models import Conversation
     complaints = Complaint.objects.all().select_related('department', 'author')
     selected_dept = request.GET.get('dept')
     if selected_dept:
         complaints = complaints.filter(department_id=selected_dept)
 
+    # complaint IDs that have unread messages
+    complaints_with_messages = set(
+        Conversation.objects.filter(is_closed=False)
+        .exclude(complaint=None)
+        .values_list('complaint_id', flat=True)
+    )
+
     return render(request, "complaints/superadmin.html", {
         "complaints": complaints.order_by('-created_at'),
         "departments": Department.objects.all(),
         "selected_dept": selected_dept,
+        "complaints_with_messages": complaints_with_messages,
         "total":            Complaint.objects.count(),
         "pending_count":    Complaint.objects.filter(status='pending').count(),
         "in_progress_count":Complaint.objects.filter(status='in_progress').count(),

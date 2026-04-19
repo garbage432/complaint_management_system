@@ -62,8 +62,13 @@
     <div class="my-item" style="gap:12px;">
       <div style="flex:2; min-width:0;">
         <div class="my-item-title">
-          <a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a>
-        </div>
+  <a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a>
+  {% if complaint.pk in complaints_with_messages %}
+  <a href="{% url 'messaging:inbox' %}" style="background:#EFF6FF; color:#1D4ED8; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.72rem; font-weight:600; text-decoration:none; margin-left:6px;">
+    💬 Message
+  </a>
+  {% endif %}
+</div>
       </div>
       <div style="flex:1; font-size:0.85rem; color:var(--text-muted);">
         {% if complaint.department %}{{ complaint.department.icon }} {{ complaint.department.name }}{% else %}—{% endif %}

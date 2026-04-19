@@ -96,15 +96,18 @@
           <span class="footer-action">👁 {{ complaint.view_count }} views</span>
           <span class="footer-action">💬 {{ complaint.comment_count }} comments</span>
 
-          <span class="ml-auto" style="display:flex; gap:0.5rem;">
-            {% if request.user == complaint.author and complaint.status == 'pending' %}
-              <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-              <form method="post" action="{% url 'accounts:withdraw_complaint' pk=complaint.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-ghost btn-sm text-danger"
-                        onclick="return confirm('Withdraw this complaint? This cannot be undone.')">Withdraw</button>
-              </form>
-            {% endif %}
+         <span class="ml-auto" style="display:flex; gap:0.5rem;">
+    {% if request.user == complaint.author and complaint.status == 'pending' %}
+      <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+      <form method="post" action="{% url 'accounts:withdraw_complaint' pk=complaint.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm text-danger"
+                onclick="return confirm('Withdraw this complaint? This cannot be undone.')">Withdraw</button>
+      </form>
+    {% endif %}
+  {% if user.is_authenticated and not user.is_staff %}
+      <a href="{% url 'messaging:start_for_complaint' complaint_pk=complaint.pk %}" class="btn btn-ghost btn-sm">✉️ Message Staff</a>
+    {% endif %}
           </span>
         </div>
       </div>

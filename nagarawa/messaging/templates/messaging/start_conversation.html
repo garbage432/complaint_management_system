@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}New Message{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px;">
+  <div class="card" style="margin-top: 1rem;">
+    <div class="card-header">
+      <h2 style="font-family: var(--font); font-size: 1.2rem;">✉️ New Message to Support</h2>
+      <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+        Our staff will respond to your message as soon as possible.
+      </p>
+    </div>
+    <div class="card-body">
+      {% if complaint %}
+      <div style="background: var(--brand-light); border: 1px solid #BFDBFE; border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem;">
+        📋 Regarding complaint: <strong><a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a></strong>
+        &nbsp;<span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+      </div>
+      {% endif %}
+
+      {% if staff_user %}
+      <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1.25rem; padding: 0.75rem; background: var(--surface-2); border-radius: var(--radius);">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+          {{ staff_user.username|first|upper }}
+        </div>
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem;">{{ staff_user.display_name }}</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">Support Staff</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          {{ form.subject }}
+          {% if form.subject.errors %}<div class="form-error">{{ form.subject.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message *</label>
+          {{ form.body }}
+          {% if form.body.errors %}<div class="form-error">{{ form.body.errors.0 }}</div>{% endif %}
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1rem;">
+          <a href="{% if complaint %}{{ complaint.get_absolute_url }}{% else %}{% url 'messaging:inbox' %}{% endif %}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">Send Message</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

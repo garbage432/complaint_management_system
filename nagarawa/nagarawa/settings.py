@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'comments',
     'departments',
     'core',
+    'messaging',
 ]
 
 MIDDLEWARE = [
