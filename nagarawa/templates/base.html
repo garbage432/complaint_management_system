@@ -13,7 +13,6 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-
 <nav class="navbar">
   <div class="container nav-inner">
     <a href="{% url 'core:feed' %}" class="nav-brand">
@@ -22,17 +21,34 @@
     </a>
 
     <div class="nav-links">
-      <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">Feed</a>
-      {% if user.is_authenticated %}
-        <a href="{% url 'complaints:my_complaints' %}" class="nav-link">My Complaints</a>
-      {% endif %}
-    </div>
+  <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">Feed</a>
+  {% if user.is_authenticated %}
+    <a href="{% url 'complaints:my_complaints' %}" class="nav-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">My Complaints</a>
+    {% if user.is_superuser %}
+      <a href="{% url 'accounts:superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">Dashboard</a>
+    {% elif user.userprofile.is_department_admin %}
+      <a href="{% url 'accounts:deptadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'deptadmin_dashboard' %}active{% endif %}">Dashboard</a>
+    {% else %}
+      <a href="{% url 'accounts:user_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">Dashboard</a>
+    {% endif %}
+  {% endif %}
+</div>
 
     <div class="nav-actions">
       {% if user.is_authenticated %}
         <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">
           <span>+</span> Post Complaint
         </a>
+        {% if user.is_authenticated %}
+<a href="{% url 'accounts:notifications' %}" class="btn btn-ghost btn-sm" style="position:relative;">
+  🔔
+  {% if unread_count > 0 %}
+  <span style="position:absolute; top:-4px; right:-4px; background:var(--danger); color:#fff; font-size:0.65rem; font-weight:700; border-radius:99px; padding:1px 5px; line-height:1.4;">
+    {{ unread_count }}
+  </span>
+  {% endif %}
+</a>
+{% endif %}
         <div class="nav-user-menu">
           <button class="nav-user-btn" onclick="toggleUserMenu(this)">
             {% if user.avatar %}
@@ -99,4 +115,5 @@ function toggleUserMenu(btn) {
 }
 </script>
 </body>
+
 </html>

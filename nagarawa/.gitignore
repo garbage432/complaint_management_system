@@ -10,9 +10,6 @@ dist/
 build/
 .eggs/
 *.log
-db.sqlite3
-media/
-staticfiles/
 .env
 .DS_Store
 *.swp

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Messages{% endblock %}
+
+{% block extra_head %}
+<style>
+.inbox-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; min-height: 620px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.inbox-sidebar { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+.inbox-sidebar-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.inbox-sidebar-title { font-family: var(--font); font-weight: 700; font-size: 1rem; }
+.inbox-search { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+.inbox-search input { width: 100%; padding: 0.4rem 0.75rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 0.85rem; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+.inbox-search input:focus { outline: none; border-color: var(--brand); }
+.inbox-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.inbox-tab { flex: 1; padding: 0.5rem; text-align: center; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; transition: all 0.15s; }
+.inbox-tab:hover { color: var(--text); text-decoration: none; }
+.inbox-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+.conv-list { flex: 1; overflow-y: auto; }
+.conv-item { display: flex; gap: 0.75rem; padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; text-decoration: none; color: inherit; position: relative; }
+.conv-item:hover { background: var(--surface-2); text-decoration: none; }
+.conv-item.active { background: var(--brand-light); }
+.conv-item.unread { background: var(--surface-2); }
+.conv-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+.conv-item-body { flex: 1; min-width: 0; }
+.conv-item-name { font-weight: 600; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 0.4rem; }
+.conv-item-subject { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-item-preview { font-size: 0.78rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.1rem; }
+.conv-item-time { font-size: 0.72rem; color: var(--text-light); white-space: nowrap; }
+.unread-badge { background: var(--brand); color: white; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.45rem; min-width: 18px; text-align: center; }
+.inbox-empty { padding: 2.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+.inbox-empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.inbox-main { display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-direction: column; gap: 0.5rem; }
+.inbox-main-icon { font-size: 2.5rem; }
+@media (max-width: 700px) { .inbox-layout { grid-template-columns: 1fr; } .inbox-main { display: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+    <div>
+      <h1 style="font-family: var(--font); font-size: 1.4rem; font-weight: 700;">
+        💬 {% if is_staff %}All Conversations{% else %}My Messages{% endif %}
+      </h1>
+      {% if total_unread > 0 %}
+      <p style="font-size: 0.85rem; color: var(--brand); margin-top: 0.2rem;">{{ total_unread }} unread message{{ total_unread|pluralize }}</p>
+      {% endif %}
+    </div>
+    {% if not is_staff %}
+    <a href="{% url 'messaging:start' %}" class="btn btn-primary btn-sm">+ New Message</a>
+    {% endif %}
+  </div>
+
+  <div class="inbox-layout">
+    <!-- Sidebar -->
+    <div class="inbox-sidebar">
+      <div class="inbox-sidebar-header">
+        <span class="inbox-sidebar-title">Conversations</span>
+        <span style="font-size: 0.78rem; color: var(--text-muted);">{{ conversations|length }}</span>
+      </div>
+
+      {% if is_staff %}
+      <!-- Staff search -->
+      <div class="inbox-search">
+        <form method="get">
+          <input type="text" name="q" value="{{ search }}" placeholder="Search by user or subject..." />
+          <input type="hidden" name="closed" value="{{ filter_closed }}" />
+        </form>
+      </div>
+      <!-- Staff tabs: open / closed -->
+      <div class="inbox-tabs">
+        <a href="?closed=0{% if search %}&q={{ search }}{% endif %}" class="inbox-tab {% if filter_closed != '1' %}active{% endif %}">Open</a>
+        <a href="?closed=1{% if search %}&q={{ search }}{% endif %}" class="inbox-tab {% if filter_closed == '1' %}active{% endif %}">Closed</a>
+      </div>
+      {% endif %}
+
+      <div class="conv-list">
+        {% for conv in conversations %}
+        <a href="{% url 'messaging:conversation' pk=conv.pk %}" class="conv-item {% if conv.unread > 0 %}unread{% endif %}">
+          <div class="conv-avatar" style="{% if conv.is_closed %}background: var(--text-muted);{% endif %}">
+            {% if is_staff %}
+              {{ conv.participant_citizen.username|first|upper }}
+            {% else %}
+              {{ conv.participant_staff.username|first|upper }}
+            {% endif %}
+          </div>
+          <div class="conv-item-body">
+            <div class="conv-item-name">
+              {% if is_staff %}{{ conv.participant_citizen.display_name }}
+              {% else %}{{ conv.participant_staff.display_name }}{% endif %}
+              {% if conv.unread > 0 %}<span class="unread-badge">{{ conv.unread }}</span>{% endif %}
+              {% if conv.is_closed %}<span style="font-size:0.7rem; background:var(--surface-2); padding:0.1rem 0.4rem; border-radius:4px; color:var(--text-muted); font-weight:500;">Closed</span>{% endif %}
+            </div>
+            <div class="conv-item-subject">{{ conv.subject|default:"No subject" }}</div>
+            {% if conv.last_msg %}
+            <div class="conv-item-preview">
+              {% if conv.last_msg.sender == request.user %}You: {% endif %}{{ conv.last_msg.body }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="conv-item-time">{{ conv.updated_at|naturaltime }}</div>
+        </a>
+        {% empty %}
+        <div class="inbox-empty">
+          <div class="inbox-empty-icon">📭</div>
+          <p>No conversations yet.</p>
+          {% if not is_staff %}
+          <a href="{% url 'messaging:start' %}" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Start a conversation</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Main panel — prompt to select -->
+    <div class="inbox-main">
+      <div class="inbox-main-icon">💬</div>
+      <p style="font-size: 0.95rem;">Select a conversation to read</p>
+      {% if not is_staff %}
+      <a href="{% url 'messaging:start' %}" class="btn btn-primary btn-sm">Start new conversation</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
