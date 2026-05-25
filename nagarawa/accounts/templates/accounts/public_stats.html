@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Platform Statistics{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:800px;">
+  <h1 style="font-size:1.4rem; font-family:var(--font); margin-bottom:0.4rem;">Platform Statistics</h1>
+  <p class="text-muted" style="margin-bottom:1.5rem; font-size:0.88rem;">Live overview of complaints across all departments.</p>
+
+  <!-- Overall stats -->
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:2rem;">
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Total</div>
+      <div style="font-size:1.5rem; font-weight:600;">{{ total }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Pending</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--warning);">{{ pending }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">In Progress</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--info);">{{ in_progress }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Solved</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--success);">{{ solved }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Solve Rate</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--success);">{{ solve_rate }}%</div>
+    </div>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:1rem;">
+    <span style="font-size:1.1rem;">⭐</span>
+    <span style="font-weight:600;">Average resolution rating: {{ avg_rating }} / 5</span>
+  </div>
+
+  <!-- Per department -->
+  <h2 style="font-size:1rem; font-family:var(--font); margin-bottom:0.75rem;">By Department</h2>
+  <div class="my-list">
+    {% for dept in departments %}
+    <div class="my-item">
+      <span style="font-size:1.4rem;">{{ dept.icon }}</span>
+      <div class="my-item-main">
+        <div class="my-item-title">{{ dept.name }}</div>
+        <div class="my-item-meta">{{ dept.total }} total &middot; {{ dept.solved }} solved</div>
+      </div>
+      <div style="min-width:120px;">
+        <div style="height:6px; background:var(--border); border-radius:99px; overflow:hidden;">
+          {% if dept.total %}
+          <div style="height:100%; width:{% widthratio dept.solved dept.total 100 %}%; background:var(--success); border-radius:99px;"></div>
+          {% endif %}
+        </div>
+        <div class="text-muted" style="font-size:0.75rem; margin-top:3px; text-align:right;">
+          {% if dept.total %}{% widthratio dept.solved dept.total 100 %}%{% else %}0%{% endif %} solved
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

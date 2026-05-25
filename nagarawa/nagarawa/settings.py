@@ -46,6 +46,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.notifications',
             ],
         },
     },
@@ -88,3 +89,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
+# Email (console for dev — swap to SMTP for production)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'Samparka <noreply@samparka.gov.np>'

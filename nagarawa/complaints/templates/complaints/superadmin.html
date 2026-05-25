@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Superadmin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+    <div>
+      <h1 style="font-family:var(--font); font-size:1.4rem; margin:0 0 4px;">Superadmin Dashboard</h1>
+      <p class="text-muted" style="font-size:0.85rem; margin:0;">All complaints across every department</p>
+    </div>
+    <a href="{% url 'admin:index' %}" class="btn btn-ghost btn-sm">Admin Panel →</a>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:1.5rem;">
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Total</div>
+      <div style="font-size:1.5rem; font-weight:600;">{{ total }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Pending</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--warning);">{{ pending_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">In Progress</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--info);">{{ in_progress_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Resolved</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--success);">{{ resolved_count }}</div>
+    </div>
+    <div class="card" style="padding:0.85rem; text-align:center;">
+      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Rejected</div>
+      <div style="font-size:1.5rem; font-weight:600; color:var(--danger);">{{ rejected_count }}</div>
+    </div>
+  </div>
+
+  <!-- Department filter -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.25rem;">
+    <a href="?" class="btn {% if not selected_dept %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+    {% for dept in departments %}
+    <a href="?dept={{ dept.id }}"
+       class="btn {% if selected_dept == dept.id|stringformat:'s' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+      {{ dept.icon }} {{ dept.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Table header -->
+  <div style="display:flex; gap:12px; padding:0 0 8px; font-size:0.72rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">
+    <span style="flex:2;">Complaint</span>
+    <span style="flex:1;">Department</span>
+    <span style="flex:1;">Posted by</span>
+    <span style="width:120px; text-align:right;">Status / Date</span>
+  </div>
+
+  <!-- Rows -->
+  <div class="my-list">
+    {% for complaint in complaints %}
+    <div class="my-item" style="gap:12px;">
+      <div style="flex:2; min-width:0;">
+        <div class="my-item-title">
+          <a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a>
+        </div>
+      </div>
+      <div style="flex:1; font-size:0.85rem; color:var(--text-muted);">
+        {% if complaint.department %}{{ complaint.department.icon }} {{ complaint.department.name }}{% else %}—{% endif %}
+      </div>
+      <div style="flex:1; font-size:0.85rem; color:var(--text-muted);">
+        {% if complaint.is_anonymous %}Anonymous{% else %}{{ complaint.author.display_name }}{% endif %}
+      </div>
+      <div style="width:120px; display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+        <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
+        <span class="text-muted" style="font-size:0.78rem;">{{ complaint.created_at|date:"M d" }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>No complaints found.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
