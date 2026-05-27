@@ -10,5 +10,5 @@ urlpatterns = [
         views.feed,
         name="feed"
     ),
-
+path("chatbot/", views.chatbot, name="chatbot"),
 ]
