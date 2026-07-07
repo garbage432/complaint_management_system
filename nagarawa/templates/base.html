@@ -1,35 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
+  {% load static %}
+  {% load i18n %}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Samparka{% endblock %} — Civic Complaint Platform</title>
+  <title>{% block title %}Samparka{% endblock %} — {% trans "Civic Complaint Platform" %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  {% load static %}
+
   <link rel="stylesheet" href="{% static 'css/main.css' %}" />
   {% block extra_head %}{% endblock %}
 </head>
 <body>
+{% get_current_language as CURRENT_LANGUAGE %}
 <nav class="navbar">
   <div class="container nav-inner">
     <a href="{% url 'core:feed' %}" class="nav-brand">
-      <span class="brand-icon">🏛</span>
-      <span>Samparka</span>
+      <span class="brand-icon">
+  <img src="/media/complaints/images/nepal-emblem.png" alt="{% trans 'Nepal Emblem' %}" width="24" height="24" style="vertical-align:middle;">
+</span>
+      {% get_current_language as CURRENT_LANGUAGE %}
+<span>{% if CURRENT_LANGUAGE == 'ne' %}सम्पर्क{% else %}Samparka{% endif %}</span>
     </a>
 
     <div class="nav-links">
-  <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">Feed</a>
+  <a href="{% url 'complaints:feed' %}" class="nav-link {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">{% trans "Feed" %}</a>
   {% if user.is_authenticated %}
-    <a href="{% url 'complaints:my_complaints' %}" class="nav-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">My Complaints</a>
+    <a href="{% url 'complaints:my_complaints' %}" class="nav-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">{% trans "My Complaints" %}</a>
     {% if user.is_superuser %}
-      <a href="{% url 'accounts:superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'accounts:superadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'superadmin_dashboard' %}active{% endif %}">{% trans "Dashboard" %}</a>
     {% elif user.userprofile.is_department_admin %}
-      <a href="{% url 'accounts:deptadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'deptadmin_dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'accounts:deptadmin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'deptadmin_dashboard' %}active{% endif %}">{% trans "Dashboard" %}</a>
     {% else %}
-      <a href="{% url 'accounts:user_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">Dashboard</a>
+      <a href="{% url 'accounts:user_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">{% trans "Dashboard" %}</a>
     {% endif %}
   {% endif %}
 </div>
@@ -37,7 +43,7 @@
     <div class="nav-actions">
       {% if user.is_authenticated %}
         <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">
-          <span>+</span> Post Complaint
+          <span>+</span> {% trans "Post Complaint" %}
         </a>
         {% if user.is_authenticated %}
 <a href="{% url 'accounts:notifications' %}" class="btn btn-ghost btn-sm" style="position:relative;">
@@ -49,6 +55,17 @@
   {% endif %}
 </a>
 {% endif %}
+
+        <form action="{% url 'set_language' %}" method="post" class="lang-switch" id="lang-form-auth">
+          {% csrf_token %}
+          <input name="next" type="hidden" id="lang-next-auth" value="{{ request.path }}">
+          <input type="hidden" name="language" id="lang-input-auth" value="{{ CURRENT_LANGUAGE }}">
+          <div class="lang-toggle">
+            <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'en' %}active{% endif %}" onclick="switchLanguage(this, 'en')">EN</button>
+            <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'ne' %}active{% endif %}" onclick="switchLanguage(this, 'ne')">ने</button>
+          </div>
+        </form>
+
         <div class="nav-user-menu">
           <button class="nav-user-btn" onclick="toggleUserMenu(this)">
             {% if user.avatar %}
@@ -60,16 +77,25 @@
             <span class="chevron">▾</span>
           </button>
           <div class="user-dropdown hidden">
-            <a href="{% url 'accounts:profile' username=user.username %}">Profile</a>
-            <a href="{% url 'accounts:profile_edit' %}">Edit Profile</a>
-            {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin Panel</a>{% endif %}
+            <a href="{% url 'accounts:profile' username=user.username %}">{% trans "Profile" %}</a>
+            <a href="{% url 'accounts:profile_edit' %}">{% trans "Edit Profile" %}</a>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}">{% trans "Admin Panel" %}</a>{% endif %}
             <hr />
-            <a href="{% url 'accounts:logout' %}" class="text-danger">Logout</a>
+            <a href="{% url 'accounts:logout' %}" class="text-danger">{% trans "Logout" %}</a>
           </div>
         </div>
       {% else %}
-        <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">Login</a>
-        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Sign Up</a>
+        <form action="{% url 'set_language' %}" method="post" class="lang-switch" id="lang-form-guest">
+          {% csrf_token %}
+          <input name="next" type="hidden" id="lang-next-guest" value="{{ request.path }}">
+          <input type="hidden" name="language" id="lang-input-guest" value="{{ CURRENT_LANGUAGE }}">
+          <div class="lang-toggle">
+            <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'en' %}active{% endif %}" onclick="switchLanguage(this, 'en')">EN</button>
+            <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'ne' %}active{% endif %}" onclick="switchLanguage(this, 'ne')">ने</button>
+          </div>
+        </form>
+        <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">{% trans "Login" %}</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">{% trans "Sign Up" %}</a>
       {% endif %}
     </div>
   </div>
@@ -92,9 +118,11 @@
 
 <footer class="footer">
   <div class="container footer-inner">
-    <span class="brand-icon">🏛</span>
-    <span>Samparka — Civic Complaint Platform &copy; 2026</span>
-    <span class="footer-note">Powered by citizens, for citizens.</span>
+    <span class="brand-icon">
+  <img src="/media/complaints/images/nepal-emblem.png" alt="{% trans 'Nepal Emblem' %}" width="24" height="24" style="vertical-align:middle;">
+</span>
+    <span>Samparka — {% trans "Civic Complaint Platform" %} &copy; 2026</span>
+    <span class="footer-note">{% trans "Powered by citizens, for citizens." %}</span>
   </div>
 </footer>
 
@@ -112,6 +140,17 @@ function toggleUserMenu(btn) {
       document.removeEventListener('click', closeMenu);
     }
   });
+}
+
+function switchLanguage(btn, langCode) {
+  const form = btn.closest('form');
+  const nextInput = form.querySelector('input[name="next"]');
+  const langInput = form.querySelector('input[name="language"]');
+  let path = window.location.pathname;
+  path = path.replace(/^\/(en|ne)(\/|$)/, '/');
+  nextInput.value = path + window.location.search;
+  langInput.value = langCode;
+  form.submit();
 }
 </script>
 </body>

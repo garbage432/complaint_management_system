@@ -3,75 +3,252 @@
 {% block title %}My Dashboard{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:800px;">
+<div class="container" style="max-width:860px;">
 
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-    <div>
-      <h1 style="font-family:var(--font); font-size:1.4rem; margin:0 0 4px;">My Dashboard</h1>
-      <p class="text-muted" style="font-size:0.85rem; margin:0;">All complaints you've submitted</p>
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      {% if user.avatar %}
+        <img src="{{ user.avatar.url }}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" />
+      {% else %}
+        <span style="width:42px;height:42px;border-radius:50%;background:var(--info-bg,#E6F1FB);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:600;color:var(--info,#185FA5);">
+          {{ user.username|first|upper }}
+        </span>
+      {% endif %}
+      <div>
+        <div style="font-size:1.1rem;font-weight:600;">Welcome back, {{ user.display_name }}</div>
+        <div class="text-muted" style="font-size:0.8rem;">Here's your complaint activity</div>
+      </div>
     </div>
     <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">+ New Complaint</a>
   </div>
 
   <!-- Stats -->
-  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.5rem;">
-    <div class="card" style="padding:0.85rem; text-align:center;">
-      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Total</div>
-      <div style="font-size:1.5rem; font-weight:600;">{{ complaints.count }}</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.75rem;">
+    <div class="card" style="padding:0.85rem;text-align:center;">
+      <div class="text-muted" style="font-size:0.72rem;margin-bottom:4px;">Total</div>
+      <div style="font-size:1.5rem;font-weight:600;">{{ total_count }}</div>
     </div>
-    <div class="card" style="padding:0.85rem; text-align:center;">
-      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Pending</div>
-      <div style="font-size:1.5rem; font-weight:600; color:var(--warning);">{{ pending_count }}</div>
+    <div class="card" style="padding:0.85rem;text-align:center;">
+      <div class="text-muted" style="font-size:0.72rem;margin-bottom:4px;">Pending</div>
+      <div style="font-size:1.5rem;font-weight:600;color:var(--warning);">{{ pending_count }}</div>
     </div>
-    <div class="card" style="padding:0.85rem; text-align:center;">
-      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">In Progress</div>
-      <div style="font-size:1.5rem; font-weight:600; color:var(--info);">{{ in_progress_count }}</div>
+    <div class="card" style="padding:0.85rem;text-align:center;">
+      <div class="text-muted" style="font-size:0.72rem;margin-bottom:4px;">In Progress</div>
+      <div style="font-size:1.5rem;font-weight:600;color:var(--info);">{{ in_progress_count }}</div>
     </div>
-    <div class="card" style="padding:0.85rem; text-align:center;">
-      <div class="text-muted" style="font-size:0.75rem; margin-bottom:4px;">Resolved</div>
-      <div style="font-size:1.5rem; font-weight:600; color:var(--success);">{{ resolved_count }}</div>
+    <div class="card" style="padding:0.85rem;text-align:center;">
+      <div class="text-muted" style="font-size:0.72rem;margin-bottom:4px;">Resolved</div>
+      <div style="font-size:1.5rem;font-weight:600;color:var(--success);">{{ resolved_count }}</div>
     </div>
   </div>
 
+  <!-- Quick Actions -->
+  <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Quick Actions</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.75rem;">
+    <a href="{% url 'complaints:create' %}" class="card card-body" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;transition:box-shadow 0.15s;">
+      <span style="width:36px;height:36px;border-radius:8px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">📝</span>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;">Submit Complaint</div>
+        <div class="text-muted" style="font-size:0.75rem;">Report a new issue</div>
+      </div>
+    </a>
+    <a href="{% url 'complaints:my_complaints' %}" class="card card-body" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+      <span style="width:36px;height:36px;border-radius:8px;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">🔍</span>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;">Track Status</div>
+        <div class="text-muted" style="font-size:0.75rem;">Check your complaints</div>
+      </div>
+    </a>
+    <a href="{% url 'complaints:feed' %}" class="card card-body" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+      <span style="width:36px;height:36px;border-radius:8px;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">👁</span>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;">View Feed</div>
+        <div class="text-muted" style="font-size:0.75rem;">Browse public complaints</div>
+      </div>
+    </a>
+  </div>
+  {# ── Profile Completion ──────────────────────────────────────── #}
+<div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Profile Completion</div>
+<div class="card card-body" style="margin-bottom:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <span style="font-size:0.88rem;font-weight:600;">Your profile is {{ profile_completion }}% complete</span>
+    <span style="font-size:0.88rem;font-weight:600;color:var(--info);">{{ profile_completion }}%</span>
+  </div>
+  <div style="background:var(--bg);border-radius:99px;height:7px;overflow:hidden;margin-bottom:10px;">
+    <div style="width:{{ profile_completion }}%;height:100%;border-radius:99px;background:var(--info);transition:width 0.4s;"></div>
+  </div>
+  <div style="display:flex;gap:1.25rem;flex-wrap:wrap;">
+    {% if user.avatar %}<span style="font-size:0.78rem;color:var(--success);">✓ Avatar uploaded</span>{% else %}<a href="{% url 'accounts:profile_edit' %}" style="font-size:0.78rem;color:var(--text-muted);">○ Add avatar</a>{% endif %}
+    {% if user.userprofile.bio %}<span style="font-size:0.78rem;color:var(--success);">✓ Bio added</span>{% else %}<a href="{% url 'accounts:profile_edit' %}" style="font-size:0.78rem;color:var(--text-muted);">○ Add bio</a>{% endif %}
+    {% if user.email %}<span style="font-size:0.78rem;color:var(--success);">✓ Email set</span>{% else %}<a href="{% url 'accounts:profile_edit' %}" style="font-size:0.78rem;color:var(--text-muted);">○ Add email</a>{% endif %}
+    {% if user.userprofile.phone %}<span style="font-size:0.78rem;color:var(--success);">✓ Phone number</span>{% else %}<a href="{% url 'accounts:profile_edit' %}" style="font-size:0.78rem;color:var(--text-muted);">○ Add phone</a>{% endif %}
+    {% if user.userprofile.location %}<span style="font-size:0.78rem;color:var(--success);">✓ Location set</span>{% else %}<a href="{% url 'accounts:profile_edit' %}" style="font-size:0.78rem;color:var(--text-muted);">○ Set location</a>{% endif %}
+  </div>
+</div>
+
+{# ── Heatmap + Notifications ──────────────────────────────────── #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+
+  {# Activity Heatmap #}
+  <div class="card card-body">
+    <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Activity — Last 12 Months</div>
+    <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:4px;">
+      {% for m in heatmap_months %}<span style="font-size:9px;color:var(--text-muted);text-align:center;">{{ m }}</span>{% endfor %}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:3px;" id="heatmap-grid">
+      {% for count in heatmap_data %}
+      <div title="{{ count }} complaint{{ count|pluralize }}" style="aspect-ratio:1;border-radius:3px;
+        background:{% if count == 0 %}var(--bg){% elif count == 1 %}#C0DD97{% elif count == 2 %}#97C459{% elif count == 3 %}#639922{% else %}#3B6D11{% endif %};"></div>
+      {% endfor %}
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;margin-top:8px;">
+      <span style="font-size:10px;color:var(--text-muted);">Less</span>
+      {% for shade in '#F1EFE8,#C0DD97,#97C459,#639922,#3B6D11'|split:',' %}
+      <div style="width:11px;height:11px;border-radius:2px;background:{{ shade }};"></div>
+      {% endfor %}
+      <span style="font-size:10px;color:var(--text-muted);">More</span>
+    </div>
+  </div>
+
+  {# Notifications #}
+  <div class="card card-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+      <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Notifications</div>
+      {% if unread_count > 0 %}<span style="background:var(--danger-bg);color:var(--danger);font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:99px;">{{ unread_count }} new</span>{% endif %}
+    </div>
+    {% for notif in recent_notifications %}
+    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+      <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;
+        background:{% if not notif.is_read %}var(--info){% else %}var(--border){% endif %};"></span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.82rem;font-weight:{% if not notif.is_read %}600{% else %}400{% endif %};">{{ notif.message }}</div>
+        <div class="text-muted" style="font-size:0.72rem;">{{ notif.created_at|naturaltime }}</div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-muted" style="font-size:0.85rem;padding:0.5rem 0;">No notifications yet.</div>
+    {% endfor %}
+    <a href="{% url 'accounts:notifications' %}" class="btn btn-ghost btn-sm btn-block" style="margin-top:0.75rem;">View all →</a>
+  </div>
+</div>
+
+{# ── Engagement Stats + Most Active Complaint ─────────────────── #}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+
+  {# Engagement Stats #}
+  <div class="card card-body">
+    <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Engagement Stats</div>
+    {% for row in engagement_stats %}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:0.82rem;color:var(--text-muted);">{{ row.label }}</span>
+      <span style="font-size:0.88rem;font-weight:600;">{{ row.value }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# Most Active Complaint #}
+  <div class="card card-body">
+    <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Most Active Complaint</div>
+    {% if top_complaint %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+      <span style="width:38px;height:38px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+        {{ top_complaint.department.icon|default:"📋" }}
+      </span>
+      <div>
+        <div style="font-size:0.88rem;font-weight:600;"><a href="{{ top_complaint.get_absolute_url }}" style="color:inherit;text-decoration:none;">{{ top_complaint.title }}</a></div>
+        <div class="text-muted" style="font-size:0.75rem;">{{ top_complaint.department.display_name|default:"No dept" }} · {{ top_complaint.created_at|naturaltime }}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px;">
+        <div style="font-size:1.1rem;font-weight:600;color:var(--success);">{{ top_complaint.upvote_count }}</div>
+        <div class="text-muted" style="font-size:0.72rem;">Upvotes</div>
+      </div>
+      <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px;">
+        <div style="font-size:1.1rem;font-weight:600;color:var(--info);">{{ top_complaint.comment_count }}</div>
+        <div class="text-muted" style="font-size:0.72rem;">Comments</div>
+      </div>
+      <div style="text-align:center;background:var(--bg);border-radius:8px;padding:8px;">
+        <div style="font-size:1.1rem;font-weight:600;color:var(--warning);">{{ top_complaint.view_count }}</div>
+        <div class="text-muted" style="font-size:0.72rem;">Views</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-muted" style="font-size:0.85rem;">No complaints yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+  <!-- Timeline + Recent Complaints side by side -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+
+    <!-- Status Timeline -->
+    <div class="card card-body">
+      <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Status Timeline</div>
+      {% for complaint in recent_complaints %}
+      <div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;
+          background:{% if complaint.status == 'resolved' %}var(--success){% elif complaint.status == 'in_progress' %}var(--info){% else %}var(--warning){% endif %};"></span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ complaint.title }}
+          </div>
+          <div class="text-muted" style="font-size:0.72rem;">{{ complaint.created_at|naturaltime }}</div>
+        </div>
+        <span class="status-badge status-{{ complaint.status }}" style="flex-shrink:0;align-self:center;">
+          {{ complaint.get_status_display }}
+        </span>
+      </div>
+      {% empty %}
+      <div class="text-muted" style="font-size:0.85rem;padding:1rem 0;">No complaints yet.</div>
+      {% endfor %}
+      {% if total_count > 5 %}
+      <a href="{% url 'complaints:my_complaints' %}" class="btn btn-ghost btn-sm btn-block" style="margin-top:0.75rem;">View all →</a>
+      {% endif %}
+    </div>
+
+    <!-- Recent Complaints -->
+    <div class="card card-body">
+      <div class="text-muted" style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;">Recent Complaints</div>
+      {% for complaint in recent_complaints %}
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="width:32px;height:32px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
+          {{ complaint.department.icon|default:"📋" }}
+        </span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <a href="{{ complaint.get_absolute_url }}" style="color:inherit;text-decoration:none;">{{ complaint.title }}</a>
+          </div>
+          <div class="text-muted" style="font-size:0.72rem;">
+            {{ complaint.department.display_name|default:"No dept" }} &middot; {{ complaint.created_at|naturaltime }} &middot; 💬 {{ complaint.comment_count }}
+          </div>
+        </div>
+        {% if complaint.status == 'pending' %}
+        <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm" style="flex-shrink:0;">Edit</a>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="text-muted" style="font-size:0.85rem;padding:1rem 0;">
+        No complaints yet. <a href="{% url 'complaints:create' %}">Post your first one.</a>
+      </div>
+      {% endfor %}
+      {% if total_count > 5 %}
+      <a href="{% url 'complaints:my_complaints' %}" class="btn btn-ghost btn-sm btn-block" style="margin-top:0.75rem;">View all →</a>
+      {% endif %}
+    </div>
+
+  </div>
+
   <!-- Department filter pills -->
-  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.25rem;">
+  <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.5rem;">Filter by Department</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;">
     <a href="?" class="btn {% if not selected_dept %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
     {% for dept in departments %}
     <a href="?dept={{ dept.id }}"
        class="btn {% if selected_dept == dept.id|stringformat:'s' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
-      {{ dept.icon }} {{ dept.name }}
+      {{ dept.icon }} {{ dept.display_name }}
     </a>
-    {% endfor %}
-  </div>
-
-  <!-- Complaint list -->
-  <div class="my-list">
-    {% for complaint in complaints %}
-    <div class="my-item">
-      {% if complaint.department %}
-      <span style="font-size:1.5rem;">{{ complaint.department.icon }}</span>
-      {% endif %}
-      <div class="my-item-main">
-        <div class="my-item-title">
-          <a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a>
-        </div>
-        <div class="my-item-meta">
-          {{ complaint.department.name|default:"No Department" }} &middot;
-          {{ complaint.created_at|naturaltime }} &middot;
-          💬 {{ complaint.comment_count }}
-        </div>
-      </div>
-      <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
-      {% if complaint.status == 'pending' %}
-      <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-      {% endif %}
-    </div>
-    {% empty %}
-    <div class="empty-state">
-      <div class="empty-icon">📭</div>
-      <p>{% if selected_dept %}No complaints for this department.{% else %}You haven't posted any complaints yet.{% endif %}</p>
-      <a href="{% url 'complaints:create' %}" class="btn btn-primary mt-2">Post Your First Complaint</a>
-    </div>
     {% endfor %}
   </div>
 

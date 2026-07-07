@@ -225,7 +225,7 @@ a:hover { text-decoration: underline; }
 .complaint-title { font-family: var(--font); font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 0.35rem; line-height: 1.4; }
 .complaint-title a { color: inherit; }
 .complaint-title a:hover { color: var(--brand); text-decoration: none; }
-.complaint-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.complaint-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: -webkit-box; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .complaint-location { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem; }
 
 .complaint-images { display: flex; gap: 0.5rem; padding: 0 1.25rem 0.75rem; overflow-x: auto; }
@@ -386,3 +386,34 @@ a:hover { text-decoration: underline; }
   .nav-username { display: none; }
   .filter-bar form { flex-direction: column; }
 }
+ .lang-toggle {
+  display: inline-flex;
+  background: var(--bg, #F1F1F1);
+  border: 1px solid var(--border, #E0E0E0);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.lang-option {
+  border: none;
+  background: transparent;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--text-muted, #666);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-option:hover {
+  color: var(--text, #222);
+}
+
+.lang-option.active {
+  background: #DC143C;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+

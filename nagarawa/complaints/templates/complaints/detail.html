@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
-{% block title %}{{ complaint.title }}{% endblock %}
+{% block title %}{% trans "complaint.title" %}{% endblock %}
+
+
 
 {% block content %}
 {% load static %}

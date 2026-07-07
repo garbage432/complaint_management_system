@@ -1,12 +1,15 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}My Complaints{% endblock %}
+{% load i18n %}
+
+{% block title %}{% trans "My Complaints" %}{% endblock %}
+
 
 {% block content %}
 <div class="container" style="max-width:800px;">
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-    <h1 style="font-family:var(--font); font-size:1.4rem;">My Complaints</h1>
-    <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">+ New Complaint</a>
+    <h1 style="font-family:var(--font); font-size:1.4rem;">{% trans "My Complaints" %}</h1>
+    <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">{% trans "+ New Complaint " %}</a>
   </div>
 
   <div class="my-list">
@@ -29,8 +32,8 @@
     {% empty %}
     <div class="empty-state">
       <div class="empty-icon">📭</div>
-      <p>You haven't posted any complaints yet.</p>
-      <a href="{% url 'complaints:create' %}" class="btn btn-primary mt-2">Post Your First Complaint</a>
+      <p>{% trans "You haven't posted any complaints yet." %}</p>
+      <a href="{% url 'complaints:create' %}" class="btn btn-primary mt-2">{% trans "Post Your First Complaint" %}</a>
     </div>
     {% endfor %}
   </div>
