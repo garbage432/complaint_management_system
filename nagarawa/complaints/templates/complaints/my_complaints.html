@@ -4,38 +4,165 @@
 
 {% block title %}{% trans "My Complaints" %}{% endblock %}
 
-
 {% block content %}
-<div class="container" style="max-width:800px;">
-  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-    <h1 style="font-family:var(--font); font-size:1.4rem;">{% trans "My Complaints" %}</h1>
-    <a href="{% url 'complaints:create' %}" class="btn btn-primary btn-sm">{% trans "+ New Complaint " %}</a>
-  </div>
+<div class="x-workspace-container">
+  
+  <!-- PART 1: LEFT SIDEBAR NAVIGATION PANEL -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        
+        <a href="{% url 'accounts:notifications' %}" class="x-v-link">
+          <span class="x-v-icon" style="position:relative;">
+            🔔
+            {% if unread_count > 0 %}
+              <span class="x-badge-count">{{ unread_count }}</span>
+            {% endif %}
+          </span>
+          <span class="x-v-label">{% trans "Notifications" %}</span>
+        </a>
+        
+        {% if user.is_authenticated %}
+          {% if user.is_superuser %}
+            <a href="{% url 'accounts:superadmin_dashboard' %}" class="x-v-link active">
+          {% elif user.userprofile.is_department_admin %}
+            <a href="{% url 'accounts:deptadmin_dashboard' %}" class="x-v-link active">
+          {% else %}
+            <a href="{% url 'accounts:user_dashboard' %}" class="x-v-link active">
+          {% endif %}
+            <span class="x-v-icon">📊</span>
+            <span class="x-v-label">{% trans "Dashboard" %}</span>
+          </a>
+        {% endif %}
 
-  <div class="my-list">
-    {% for complaint in complaints %}
-    <div class="my-item">
-      {% if complaint.department %}
-      <span style="font-size:1.5rem;">{{ complaint.department.icon }}</span>
-      {% endif %}
-      <div class="my-item-main">
-        <div class="my-item-title"><a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a></div>
-        <div class="my-item-meta">
-          {{ complaint.department.name|default:"No Department" }} &middot; {{ complaint.created_at|naturaltime }} &middot; {{ complaint.comment_count }} comments
+        <div class="x-v-section-title">{% trans "Departments" %}</div>
+        <div class="x-v-dept-scroll-wrapper">
+          {% for dept in departments %}
+          <a href="{% url 'complaints:feed' %}?department={{ dept.id }}" class="x-v-link x-v-dept-link">
+            <span class="x-v-icon">{{ dept.icon }}</span>
+            <span class="x-v-label">{{ dept.display_name }}</span>
+          </a>
+          {% endfor %}
         </div>
+      </nav>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration:none; text-align:center; display:block; line-height:2.4;">+ {% trans "Post" %}</a>
+      {% endif %}
+
+      <!-- User Profile Deck Anchor -->
+      {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
       </div>
-      <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
-      {% if complaint.status == 'pending' %}
-      <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
       {% endif %}
     </div>
-    {% empty %}
-    <div class="empty-state">
-      <div class="empty-icon">📭</div>
-      <p>{% trans "You haven't posted any complaints yet." %}</p>
-      <a href="{% url 'complaints:create' %}" class="btn btn-primary mt-2">{% trans "Post Your First Complaint" %}</a>
+  </aside>
+
+  <!-- PART 2: CENTER STREAM (YOUR RECORDED COMPLAINTS) -->
+  <main class="x-panel-center">
+    
+    <!-- Header Stream Title Matrix -->
+    <div style="border-bottom: 1px solid var(--border-color); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; sticky-top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); z-index: 10;">
+      <div>
+        <h1 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; font-family: var(--font-stack);">{% trans "My Complaints" %}</h1>
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">{% trans "Managing your recorded pipeline filings" %}</span>
+      </div>
+      <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="margin-top:0 !important; width: auto !important; padding: 6px 16px !important; font-size: 0.88rem !important; text-decoration: none;">{% trans "+ New Complaint" %}</a>
     </div>
-    {% endfor %}
-  </div>
+
+    <!-- Cleaned X-Style List Stream -->
+    <div class="my-list">
+      {% for complaint in complaints %}
+      <div class="my-item" style="border-bottom: 1px solid var(--border-color); padding: 16px; display: flex; gap: 14px; align-items: flex-start; transition: background 0.2s;" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.01)'" onmouseout="this.style.backgroundColor='transparent'">
+        
+        {% if complaint.department %}
+        <span style="font-size: 1.6rem; background: var(--bg-subtle); border-radius: 50%; padding: 8px; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+          {{ complaint.department.icon }}
+        </span>
+        {% else %}
+        <span style="font-size: 1.6rem; background: var(--bg-subtle); border-radius: 50%; padding: 8px; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+          📁
+        </span>
+        {% endif %}
+
+        <div class="my-item-main" style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+          <div class="my-item-title">
+            <a href="{{ complaint.get_absolute_url }}" style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); text-decoration: none; line-height: 1.3;">
+              {{ complaint.title }}
+            </a>
+          </div>
+          <div class="my-item-meta" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+            <span style="color: var(--accent-blue);">{{ complaint.department.display_name|default:"General / No Department" }}</span>
+            &middot; <span>{{ complaint.created_at|naturaltime }}</span>
+            &middot; <span>💬 {{ complaint.comment_count }}</span>
+          </div>
+        </div>
+
+        <!-- Action Set Triggers Rightside -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <span class="status-badge status-{{ complaint.status }}" style="font-weight: 700; font-size: 0.78rem;">
+            {{ complaint.get_status_display }}
+          </span>
+          
+          {% if complaint.status == 'pending' %}
+          <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="x-pill-action-btn" style="border: 1px solid #cfd9de; padding: 4px 12px !important; text-decoration: none; font-size: 0.8rem; font-weight: 700;">
+            ✏️ {% trans "Edit" %}
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="empty-state" style="text-align: center; padding: 60px 16px; color: var(--text-muted);">
+        <div class="empty-icon" style="font-size: 2.5rem; margin-bottom: 12px;">📭</div>
+        <p style="font-size: 1rem; font-weight: 600; margin-bottom: 14px;">{% trans "You haven't posted any complaints yet." %}</p>
+        <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="width: auto !important; padding: 8px 20px !important; display: inline-block; text-decoration: none;">{% trans "Post Your First Complaint" %}</a>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- PART 3: RIGHT SIDEBAR PANEL -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      
+      <!-- General Civic Workspace Information Panel -->
+      <div class="x-right-sidebar-block" style="background-color: var(--bg-subtle);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <img src="/media/complaints/images/nepal-emblem.png" alt="{% trans 'Nepal Emblem' %}" style="width: 32px; height: auto; object-fit: contain;" />
+          <div>
+            <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-main);">{% trans "सम्पर्क — Samparka" %}</div>
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">{% trans "Track Filing Suite" %}</div>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.4; margin: 0 0 12px 0;">{% trans "This private suite tracks pipeline logs submitted from your account. Upvoted items gain public visual traction on the feed stream rooms." %}</p>
+        <div style="border-top: 1px dashed var(--border-color); margin-bottom: 12px;"></div>
+        <div style="font-size: 0.78rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">{% trans "Filing Lifecycle" %}</div>
+        <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--text-main); font-weight: 500;">
+          <li>⏳ <strong style="color:var(--accent-orange);">Pending:</strong> {% trans "Editable by you until reviewed." %}</li>
+          <li>⚙️ <strong style="color:var(--accent-blue);">In Progress:</strong> {% trans "Assigned to department ops." %}</li>
+          <li>✅ <strong style="color:var(--accent-green);">Resolved:</strong> {% trans "Marked complete with execution summary." %}</li>
+        </ul>
+      </div>
+
+    </div>
+  </aside>
+
 </div>
 {% endblock %}

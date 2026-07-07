@@ -1,343 +1,140 @@
-{% extends 'base.html' %}
-{% load humanize %}
+{% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 
-{% block title %}{% trans "complaint.title" %}{% endblock %}
+{% block title %}{{ complaint.title }}{% endblock %}
 
-
+{% block extra_head %}
+<style>
+  .x-global-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  #complaint-map {
+    width: 100%;
+    height: 240px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin: 12px 0;
+    z-index: 1;
+  }
+  .comment-block {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .reply-form-wrapper {
+    display: none;
+    margin-top: 8px;
+    padding-left: 32px;
+  }
+  .reply-form-wrapper.open {
+    display: block;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-{% load static %}
-<div class="container">
-  <div class="detail-layout">
-    <!-- Main -->
-    <div class="detail-main">
+<div class="x-workspace-container" data-complaint="{{ complaint.id }}">
 
-      <!-- Complaint Card -->
-      <div class="detail-card" data-complaint="{{ complaint.id }}">
-        <div class="detail-header">
-          <!-- Author row -->
-          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.85rem;">
-            {% if complaint.is_anonymous %}
-              <span class="complaint-author-avatar" style="background:var(--text-muted); width:42px; height:42px; font-size:1rem;">?</span>
-              <div>
-                <div style="font-weight:600;">Anonymous</div>
-                <div style="font-size:0.8rem;color:var(--text-light);">{{ complaint.created_at|naturaltime }}</div>
-              </div>
-            {% else %}
-              <a href="{% url 'accounts:profile' username=complaint.author.username %}" class="complaint-author-avatar" style="width:42px;height:42px;font-size:1rem;text-decoration:none;">
-                {% if complaint.author.avatar %}<img src="{{ complaint.author.avatar.url }}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" />
-                {% else %}{{ complaint.author.username|first|upper }}{% endif %}
-              </a>
-              <div>
-                <a href="{% url 'accounts:profile' username=complaint.author.username %}" style="font-weight:600;color:var(--text);text-decoration:none;">{{ complaint.author.display_name }}</a>
-                <div style="font-size:0.8rem;color:var(--text-light);">{{ complaint.created_at|naturaltime }}</div>
-              </div>
-            {% endif %}
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link active">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+      </nav>
+    </div>
+  </aside>
 
-            <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-              {% if complaint.department %}
-                <span class="dept-badge">{{ complaint.department.icon }} {{ complaint.department.name }}</span>
-              {% endif %}
-              <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span>
-              <!-- Priority badge -->
-              {% if complaint.priority %}
-              <span class="status-badge" style="
-                background:{% if complaint.priority == 'urgent' %}var(--danger){% elif complaint.priority == 'high' %}var(--warning){% elif complaint.priority == 'medium' %}var(--info){% else %}var(--border){% endif %};
-                color:{% if complaint.priority == 'urgent' or complaint.priority == 'high' %}#fff{% else %}var(--text){% endif %};
-                font-size:0.72rem;">
-                {% if complaint.priority == 'urgent' %}🔴{% elif complaint.priority == 'high' %}🟠{% elif complaint.priority == 'medium' %}🔵{% else %}⚪{% endif %}
-                {{ complaint.priority|capfirst }}
-              </span>
-              {% endif %}
-            </div>
-          </div>
-
-          <h1 class="detail-title">{{ complaint.title }}</h1>
-
-          {% if complaint.location_name %}
-          <div class="complaint-location" style="font-size:0.88rem;">📍 {{ complaint.location_name }}</div>
-          {% endif %}
-
-          {% if complaint.due_date %}
-          <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">
-            ⏰ Due: <strong style="color:{% if complaint.due_date < today %}var(--danger){% else %}var(--text){% endif %};">{{ complaint.due_date|date:"M d, Y" }}</strong>
-            {% if complaint.due_date < today %}<span style="color:var(--danger); font-size:0.75rem;">— Overdue</span>{% endif %}
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="detail-body">
-          <div class="detail-desc">{{ complaint.description }}</div>
-
-          {% if complaint.images.all %}
-          <div class="detail-images">
-            {% for img in complaint.images.all %}
-            <img src="{{ img.image.url }}" alt="Complaint image" />
-            {% endfor %}
-          </div>
-          {% endif %}
-
-          {% if complaint.has_location %}
-          <div style="margin-top:1.25rem;">
-            <div style="font-size:0.82rem; font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.04em;">Location</div>
-            <div id="complaint-map"></div>
-          </div>
-          {% endif %}
-        </div>
-
-        <div class="detail-footer">
-          <div class="vote-group">
-            {% if user.is_authenticated %}
-              <button class="vote-btn vote-up {% if user_vote == 1 %}active-up{% endif %}" onclick="handleVote({{ complaint.id }}, 1)">▲ {{ complaint.upvote_count }}</button>
-              <span class="vote-score">{{ complaint.vote_score }}</span>
-              <button class="vote-btn vote-down {% if user_vote == -1 %}active-down{% endif %}" onclick="handleVote({{ complaint.id }}, -1)">▼ {{ complaint.downvote_count }}</button>
-            {% else %}
-              <span class="footer-action">▲ {{ complaint.upvote_count }} &nbsp;·&nbsp; ▼ {{ complaint.downvote_count }}</span>
-            {% endif %}
-          </div>
-          <span class="footer-action">👁 {{ complaint.view_count }} views</span>
-          <span class="footer-action">💬 {{ complaint.comment_count }} comments</span>
-
-         <span class="ml-auto" style="display:flex; gap:0.5rem;">
-    {% if request.user == complaint.author and complaint.status == 'pending' %}
-      <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
-      <form method="post" action="{% url 'accounts:withdraw_complaint' pk=complaint.pk %}" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-ghost btn-sm text-danger"
-                onclick="return confirm('Withdraw this complaint? This cannot be undone.')">Withdraw</button>
-      </form>
-    {% endif %}
-  {% if user.is_authenticated and not user.is_staff %}
-      <a href="{% url 'messaging:start_for_complaint' complaint_pk=complaint.pk %}" class="btn btn-ghost btn-sm">✉️ Message Staff</a>
-    {% endif %}
-          </span>
-        </div>
-      </div>
-
-      <!-- Rate resolution (only author, only when solved, only once) -->
-      {% if request.user == complaint.author and complaint.status == 'solved' %}
-      <div class="card card-body" style="margin-bottom:1rem; padding:1rem;">
-        {% if complaint.rating %}
-          <div style="font-weight:600; margin-bottom:6px;">Your rating</div>
-          <div style="font-size:1.2rem; margin-bottom:4px;">
-            {% for i in "12345" %}{% if forloop.counter <= complaint.rating.stars %}⭐{% else %}☆{% endif %}{% endfor %}
-            <span style="font-size:0.85rem; color:var(--text-muted);">{{ complaint.rating.stars }}/5</span>
-          </div>
-          {% if complaint.rating.feedback %}
-          <div class="text-muted" style="font-size:0.85rem;">{{ complaint.rating.feedback }}</div>
-          {% endif %}
-        {% else %}
-          <div style="font-weight:600; margin-bottom:0.5rem;">Rate this resolution</div>
-          <p class="text-muted" style="font-size:0.82rem; margin-bottom:0.75rem;">How satisfied are you with how this complaint was handled?</p>
-          <form method="post" action="{% url 'accounts:rate_complaint' pk=complaint.pk %}">
-            {% csrf_token %}
-            <div style="display:flex; gap:4px; margin-bottom:0.6rem;" id="star-row">
-              {% for i in "12345" %}
-              <label style="cursor:pointer; font-size:1.6rem; line-height:1;" title="{{ i }} star{% if i != '1' %}s{% endif %}">
-                <input type="radio" name="stars" value="{{ i }}" required style="display:none;" onchange="highlightStars({{ i }})" />
-                <span class="star" data-val="{{ i }}">☆</span>
-              </label>
-              {% endfor %}
-            </div>
-            <textarea name="feedback" class="form-input" rows="2"
-                      placeholder="Optional feedback on how this was resolved..."
-                      style="margin-bottom:0.5rem;"></textarea>
-            <button type="submit" class="btn btn-primary btn-sm">Submit Rating</button>
-          </form>
-          <script>
-            function highlightStars(val) {
-              document.querySelectorAll('.star').forEach(s => {
-                s.textContent = parseInt(s.dataset.val) <= val ? '⭐' : '☆';
-              });
-            }
-          </script>
-        {% endif %}
-      </div>
-      {% endif %}
-
-      <!-- Comments -->
-      <div class="comments-section" id="comments">
-        <div class="comments-title">💬 Comments ({{ complaint.comment_count }})</div>
-
-        {% if user.is_authenticated %}
-        <div class="comment-form-wrap">
-          <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
-            {% csrf_token %}
-            {{ comment_form.body }}
-            <div style="display:flex; justify-content:flex-end; margin-top:0.5rem;">
-              <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
-            </div>
-          </form>
-        </div>
-        {% else %}
-        <p class="text-muted" style="margin-bottom:1rem;font-size:0.9rem;"><a href="{% url 'accounts:login' %}">Login</a> to leave a comment.</p>
-        {% endif %}
-
-        <div class="comment-list">
-          {% for comment in comments %}
-          <div class="comment-item">
-            <a href="{% url 'accounts:profile' username=comment.author.username %}" class="comment-avatar">
-              {% if comment.author.avatar %}<img src="{{ comment.author.avatar.url }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
-              {% else %}{{ comment.author.username|first|upper }}{% endif %}
-            </a>
-            <div class="comment-bubble">
-              <div class="comment-meta">
-                <a href="{% url 'accounts:profile' username=comment.author.username %}" class="comment-author">{{ comment.author.display_name }}</a>
-                <span class="comment-time">{{ comment.created_at|naturaltime }}</span>
-              </div>
-              <div class="comment-body">{{ comment.body }}</div>
-              <div class="comment-actions">
-                {% if user.is_authenticated %}
-                <button class="comment-action-btn" onclick="toggleReply({{ comment.id }})">Reply</button>
-                {% endif %}
-                {% if user == comment.author %}
-                <form method="post" action="{% url 'comments:delete' pk=comment.pk %}" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="comment-action-btn text-danger" onclick="return confirm('Delete this comment?')">Delete</button>
-                </form>
-                {% endif %}
-              </div>
-
-              {% if user.is_authenticated %}
-              <div class="reply-form" id="reply-form-{{ comment.id }}">
-                <form method="post" action="{% url 'comments:add' complaint_pk=complaint.pk %}">
-                  {% csrf_token %}
-                  <input type="hidden" name="parent_id" value="{{ comment.id }}" />
-                  <textarea name="body" class="form-input" rows="2" placeholder="Write a reply..." style="margin-top:0.5rem;"></textarea>
-                  <div style="display:flex; gap:0.5rem; margin-top:0.4rem; justify-content:flex-end;">
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="toggleReply({{ comment.id }})">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Reply</button>
-                  </div>
-                </form>
-              </div>
-              {% endif %}
-
-              {% if comment.replies.all %}
-              <div class="replies">
-                {% for reply in comment.replies.all %}
-                {% if reply.is_approved %}
-                <div class="comment-item">
-                  <a href="{% url 'accounts:profile' username=reply.author.username %}" class="comment-avatar" style="width:26px;height:26px;font-size:0.7rem;">
-                    {% if reply.author.avatar %}<img src="{{ reply.author.avatar.url }}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;" />
-                    {% else %}{{ reply.author.username|first|upper }}{% endif %}
-                  </a>
-                  <div class="comment-bubble">
-                    <div class="comment-meta">
-                      <a href="{% url 'accounts:profile' username=reply.author.username %}" class="comment-author">{{ reply.author.display_name }}</a>
-                      <span class="comment-time">{{ reply.created_at|naturaltime }}</span>
-                    </div>
-                    <div class="comment-body">{{ reply.body }}</div>
-                    {% if user == reply.author %}
-                    <div class="comment-actions">
-                      <form method="post" action="{% url 'comments:delete' pk=reply.pk %}" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="comment-action-btn text-danger" onclick="return confirm('Delete?')">Delete</button>
-                      </form>
-                    </div>
-                    {% endif %}
-                  </div>
-                </div>
-                {% endif %}
-                {% endfor %}
-              </div>
-              {% endif %}
-
-            </div>
-          </div>
-          {% empty %}
-          <div class="empty-state" style="padding:1.5rem;">
-            <p>No comments yet. Be the first!</p>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
+  <main class="x-panel-center">
+    <div class="x-center-filter-row" style="position: static;">
+      <a href="{% url 'complaints:feed' %}" style="text-decoration: none; color: var(--accent-blue); font-weight: 700; font-size: 0.9rem;">← {% trans "Back to Feed" %}</a>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-
-      <!-- Status Timeline -->
-      <div class="sidebar-card">
-        <div class="sidebar-title">Status Timeline</div>
-        <div class="status-timeline">
-          {% for log in complaint.status_logs.all %}
-          <div class="timeline-item">
-            <div class="timeline-dot" style="background:
-              {% if log.new_status == 'solved' %}var(--success)
-              {% elif log.new_status == 'rejected' %}var(--danger)
-              {% elif log.new_status == 'in_progress' %}var(--purple)
-              {% elif log.new_status == 'verified' %}var(--info)
-              {% else %}var(--accent){% endif %};"></div>
-            <div class="timeline-content">
-              <div class="timeline-status">{% load complaint_tags %}{{ log.new_status|status_label }}</div>
-              <div class="timeline-time">{{ log.created_at|naturaltime }}</div>
-              {% if log.note %}<div class="timeline-note">{{ log.note }}</div>{% endif %}
-            </div>
-          </div>
-          {% empty %}
-          <p class="text-muted" style="font-size:0.85rem;">No updates yet.</p>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Complaint Info -->
-      <div class="sidebar-card">
-        <div class="sidebar-title">Info</div>
-        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
-          {% if complaint.department %}
-          <div><span class="text-muted">Department:</span> <strong>{{ complaint.department.icon }} {{ complaint.department.name }}</strong></div>
-          {% endif %}
-          <div><span class="text-muted">Status:</span> <span class="status-badge status-{{ complaint.status }}">{{ complaint.get_status_display }}</span></div>
-          {% if complaint.priority %}
-          <div><span class="text-muted">Priority:</span> <strong>{{ complaint.priority|capfirst }}</strong></div>
-          {% endif %}
-          {% if complaint.due_date %}
-          <div><span class="text-muted">Due:</span> <strong>{{ complaint.due_date|date:"M d, Y" }}</strong></div>
-          {% endif %}
-          <div><span class="text-muted">Posted:</span> {{ complaint.created_at|date:"M d, Y" }}</div>
-          <div><span class="text-muted">Views:</span> {{ complaint.view_count }}</div>
-          <div><span class="text-muted">Score:</span> {{ complaint.vote_score }}</div>
-          {% if complaint.rating %}
-          <div><span class="text-muted">Rating:</span>
-            {% for i in "12345" %}{% if forloop.counter <= complaint.rating.stars %}⭐{% else %}☆{% endif %}{% endfor %}
-          </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Assigned to -->
-      {% if complaint.assignment %}
-      <div class="sidebar-card">
-        <div class="sidebar-title">Assigned To</div>
-        <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
-          <span class="complaint-author-avatar" style="width:30px;height:30px;font-size:0.75rem;">
-            {{ complaint.assignment.assigned_to.username|first|upper }}
-          </span>
-          <div>
-            <div style="font-weight:600;">{{ complaint.assignment.assigned_to.display_name }}</div>
-            {% if complaint.assignment.note %}
-            <div class="text-muted" style="font-size:0.78rem;">{{ complaint.assignment.note }}</div>
-            {% endif %}
+    <article style="padding: 16px; border-bottom: 4px solid var(--border-color);">
+      <div class="complaint-card-header" style="gap: 12px; display: flex; align-items: center;">
+        <span class="complaint-author-avatar">{{ complaint.user.username|first|upper }}</span>
+        <div class="complaint-meta" style="flex: 1;">
+          <div class="complaint-meta-left">
+            <span class="complaint-author-name">{{ complaint.user.display_name }}</span>
+            <span class="complaint-timestamp">{{ complaint.created_at|timesince }} ago</span>
           </div>
         </div>
+        <span class="status-badge" style="background: #e8f5fe; color: var(--accent-blue);">{{ complaint.get_status_display }}</span>
       </div>
-      {% endif %}
 
-      <a href="{% url 'complaints:feed' %}" class="btn btn-ghost btn-sm btn-block">← Back to Feed</a>
-    </aside>
-  </div>
+      <h1 style="font-size: 1.4rem; font-weight: 800; margin: 12px 0 6px 0; color: var(--text-main);">{{ complaint.title }}</h1>
+      <p style="font-size: 1rem; color: var(--text-main); white-space: pre-wrap; line-height: 1.5;">{{ complaint.description }}</p>
+
+      <div class="complaint-location" style="margin-top: 12px; font-weight: 600;">📍 {{ complaint.location_name }}</div>
+      
+      <div id="complaint-map"></div>
+      
+      <div class="complaint-footer" style="margin-top: 16px; max-width: 100%; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div class="x-pill-vote-box">
+          <button class="x-pill-vote-arrow up {% if user_vote == 1 %}active-up{% endif %}" onclick="handleVote('{{ complaint.id }}', 'up')">▲</button>
+          <span class="x-pill-vote-counter">{{ complaint.score }}</span>
+          <button class="x-pill-vote-arrow down {% if user_vote == -1 %}active-down{% endif %}" onclick="handleVote('{{ complaint.id }}', 'down')">▼</button>
+        </div>
+      </div>
+    </article>
+
+    <section>
+      <div style="padding: 12px 16px; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-color); font-weight: 700;">
+        {% trans "Discussion Stream" %}
+      </div>
+
+      {% for comment in complaint.comments.all %}
+        <div class="comment-block">
+          <div style="font-size: 0.88rem; margin-bottom: 4px;">
+            <strong>{{ comment.user.display_name }}</strong> 
+            <span style="color: var(--text-muted);">· {{ comment.created_at|timesince }} ago</span>
+          </div>
+          <p style="font-size: 0.95rem; color: var(--text-main);">{{ comment.text }}</p>
+          
+          <button onclick="toggleReply('{{ comment.id }}')" style="background:none; border:none; color:var(--accent-blue); font-size:0.8rem; font-weight:700; margin-top:6px; cursor:pointer; padding:0;">
+            💬 {% trans "Reply" %}
+          </button>
+
+          <div id="reply-form-{{ comment.id }}" class="reply-form-wrapper">
+            <form method="post" action="{% url 'complaints:add_reply' comment.id %}">
+              {% csrf_token %}
+              <input type="text" name="text" placeholder="Write an inline answer response..." style="width:75%; padding:6px; border:1px solid var(--border-color); border-radius:4px;" required />
+              <button type="submit" style="background:var(--accent-blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:700; cursor:pointer;">{% trans "Send" %}</button>
+            </form>
+          </div>
+        </div>
+      {% empty %}
+        <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+          {% trans "No responses recorded yet. Start the coordination dialogue stream." %}
+        </div>
+      {% endfor %}
+    </section>
+  </main>
+
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Assigned Jurisdiction" %}</h4>
+        <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-blue);">{{ complaint.department.name|default:"General Municipality Support" }}</div>
+      </section>
+    </div>
+  </aside>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% if complaint.has_location %}
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    initDetailMap({{ complaint.latitude }}, {{ complaint.longitude }}, "{{ complaint.location_name|escapejs }}");
+  // Hooks cleanly into the detail map display engine logic from main.js
+  document.addEventListener('DOMContentLoaded', () => {
+    const lat = parseFloat("{{ complaint.latitude }}");
+    const lng = parseFloat("{{ complaint.longitude }}");
+    if (!isNaN(lat) && !isNaN(lng)) {
+      initDetailMap(lat, lng, "{{ complaint.location_name|escapejs }}");
+    }
   });
 </script>
-{% endif %}
-
 {% endblock %}

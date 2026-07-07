@@ -1,130 +1,128 @@
-```django
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load humanize %}
 {% load i18n %}
 
 {% block title %}{% trans "Notifications" %}{% endblock %}
 
+{% block extra_head %}
+<style>
+  .x-global-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  .notif-card {
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px;
+    background: #ffffff;
+    transition: background-color 0.2s ease;
+  }
+  .notif-card.unread {
+    background-color: var(--bg-subtle);
+  }
+  .notif-card:hover {
+    background-color: rgba(0, 0, 0, 0.01);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container">
+<div class="x-workspace-container">
 
-    <div class="feed-layout">
+  <!-- PANEL 1: LEFT SIDEBAR NAVIGATION -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+          <span class="x-v-icon">📂</span>
+          <span class="x-v-label">{% trans "My Complaints" %}</span>
+        </a>
+      </nav>
+    </div>
+  </aside>
 
-        <!-- Notifications -->
-        <div>
+  <!-- PANEL 2: CENTER TIMELINE CONTENT STREAM -->
+  <main class="x-panel-center" style="border-right: none !important;">
+    
+    <!-- Header Row Bar -->
+    <div class="x-center-filter-row" style="position: static; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0; color: var(--text-main);">🔔 {% trans "Notifications" %}</h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          {{ notifications|length }} {% trans "items recorded" %}
+        </span>
+      </div>
+    </div>
 
-            <div class="card card-body mb-2"
-                 style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-                <div>
-                    <h2 style="margin:0;">🔔 {% trans "Notifications" %}</h2>
-                    <small class="text-muted">
-                        {{ notifications|length }} {% trans "notifications" %}
-                    </small>
+    <!-- Feed Stream Container -->
+    <div class="x-feed-stream-container">
+      {% for notif in notifications %}
+        <div class="notif-card {% if not notif.is_read %}unread{% endif %}">
+          
+          <div class="complaint-card-header" style="gap: 12px; display: flex; align-items: flex-start;">
+            <span class="complaint-author-avatar" style="background: {% if notif.is_read %}var(--border-color, #eff3f4){% else %}#e8f5fe{% endif %}; font-size: 1.1rem; min-width: 40px;">
+              🔔
+            </span>
+            
+            <div class="complaint-meta" style="flex: 1;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="complaint-author-name" style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">
+                  {{ notif.title }}
+                </span>
+                
+                {% if not notif.is_read %}
+                  <span class="status-badge" style="background: var(--accent-blue, #1d9bf0); color: #ffffff; font-size: 0.75rem; padding: 2px 8px;">
+                    {% trans "New" %}
+                  </span>
+                {% endif %}
+              </div>
+              
+              <div class="complaint-timestamp" style="margin-top: 2px;">
+                {{ notif.created_at|naturaltime }}
+              </div>
+              
+              <div class="complaint-desc" style="display: block; -webkit-line-clamp: unset; margin-top: 8px; color: var(--text-main); font-size: 0.95rem; line-height: 1.4;">
+                {{ notif.body }}
+              </div>
+              
+              {% if notif.link %}
+                <div style="margin-top: 12px;">
+                  <a href="{{ notif.link }}" class="x-pill-action-btn" style="text-decoration: none; display: inline-block; padding: 6px 14px; font-size: 0.85rem; font-weight: 700; border: 1px solid var(--border-color); background: #fff; color: var(--text-main);">
+                    {% trans "View Details" %} →
+                  </a>
                 </div>
+              {% endif %}
             </div>
-
-            <div class="feed-list">
-
-                {% for notif in notifications %}
-
-                <div class="complaint-card">
-
-                    <!-- Header -->
-                    <div class="complaint-card-header">
-
-                        <span class="complaint-author-avatar"
-                              style="background:
-                              {% if notif.is_read %}
-                                  var(--border);
-                              {% else %}
-                                  var(--accent);
-                              {% endif %}">
-                            🔔
-                        </span>
-
-                        <div class="complaint-meta">
-
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-
-                                <span class="complaint-author-name">
-                                    {{ notif.title }}
-                                </span>
-
-                                {% if not notif.is_read %}
-                                <span class="status-badge status-pending">
-                                    {% trans "New" %}
-                                </span>
-                                {% endif %}
-
-                            </div>
-
-                            <div class="complaint-timestamp">
-                                {{ notif.created_at|naturaltime }}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <!-- Body -->
-                    <div class="complaint-body">
-
-                        <div class="complaint-desc"
-                             style="display:block;-webkit-line-clamp:unset;">
-                            {{ notif.body }}
-                        </div>
-
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="complaint-footer">
-
-                        {% if notif.link %}
-                        <a href="{{ notif.link }}"
-                           class="btn btn-ghost btn-sm">
-                            {% trans "View" %} →
-                        </a>
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-                {% empty %}
-
-                <div class="empty-state">
-                    <div class="empty-icon">🔔</div>
-
-                    <p>
-                        {% trans "You don't have any notifications yet." %}
-                    </p>
-                </div>
-
-                {% endfor %}
-
-            </div>
+          </div>
 
         </div>
-
-        <!-- Sidebar -->
-        <aside class="sidebar">
-
-            <div class="sidebar-card">
-
-                <div class="sidebar-title">
-                    {% trans "Notifications" %}
-                </div>
-
-                <p class="text-muted" style="font-size:.9rem;">
-                    {% trans "Stay updated with replies, status changes and important announcements." %}
-                </p>
-
-            </div>
-
-        </aside>
-
+      {% empty %}
+        <!-- Empty Feed State Layout -->
+        <div style="padding: 64px 16px; text-align: center; color: var(--text-muted);">
+          <div style="font-size: 3rem; margin-bottom: 16px;">🔔</div>
+          <p style="font-size: 0.95rem; font-weight: 600;">
+            {% trans "Your notification log is clear." %}
+          </p>
+        </div>
+      {% endfor %}
     </div>
+  </main>
+
+  <!-- PANEL 3: RIGHT SIDEBAR -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Activity Control" %}</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+          {% trans "Stay continuously updated regarding updates to your filed reports, response feedback loops, and citizen authorization streams." %}
+        </p>
+      </section>
+    </div>
+  </aside>
 
 </div>
 {% endblock %}
-```
