@@ -5,7 +5,6 @@
 {% block title %}{{ complaint.title }}{% endblock %}
 
 {% block extra_head %}
-hello
 <style>
   .x-global-header {
     position: sticky !important;
@@ -56,10 +55,10 @@ hello
 
     <article style="padding: 16px; border-bottom: 4px solid var(--border-color);">
       <div class="complaint-card-header" style="gap: 12px; display: flex; align-items: center;">
-        <span class="complaint-author-avatar">{{ complaint.user.username|first|upper }}</span>
+        <span class="complaint-author-avatar">{{ complaint.author.username|first|upper }}</span>
         <div class="complaint-meta" style="flex: 1;">
           <div class="complaint-meta-left">
-            <span class="complaint-author-name">{{ complaint.user.display_name }}</span>
+            <span class="complaint-author-name">{{ complaint.author.display_name }}</span>
             <span class="complaint-timestamp">{{ complaint.created_at|timesince }} ago</span>
           </div>
         </div>
@@ -76,36 +75,36 @@ hello
       <div class="complaint-footer" style="margin-top: 16px; max-width: 100%; border-top: 1px solid var(--border-color); padding-top: 12px;">
         <div class="x-pill-vote-box">
           <button class="x-pill-vote-arrow up {% if user_vote == 1 %}active-up{% endif %}" onclick="handleVote('{{ complaint.id }}', 'up')">▲</button>
-          <span class="x-pill-vote-counter">{{ complaint.score }}</span>
+          <span class="x-pill-vote-counter">{{ complaint.vote_score }}</span>
           <button class="x-pill-vote-arrow down {% if user_vote == -1 %}active-down{% endif %}" onclick="handleVote('{{ complaint.id }}', 'down')">▼</button>
         </div>
       </div>
     </article>
 
-    <section>
+    <section id="comments">
       <div style="padding: 12px 16px; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-color); font-weight: 700;">
         {% trans "Discussion Stream" %}
       </div>
 
+      {% if user.is_authenticated %}
+        <div style="padding: 16px; border-bottom: 1px solid var(--border-color);">
+          <form method="post" action="{% url 'comments:add' complaint.pk %}">
+            {% csrf_token %}
+            <textarea name="body" placeholder="{% trans 'Write a comment...' %}" rows="3" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-family:inherit; font-size:0.92rem; resize:vertical;" required></textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+              <button type="submit" style="background:var(--accent-blue); color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; cursor:pointer;">{% trans "Post" %}</button>
+            </div>
+          </form>
+        </div>
+      {% endif %}
+
       {% for comment in complaint.comments.all %}
         <div class="comment-block">
           <div style="font-size: 0.88rem; margin-bottom: 4px;">
-            <strong>{{ comment.user.display_name }}</strong> 
+            <strong>{{ comment.author.display_name }}</strong> 
             <span style="color: var(--text-muted);">· {{ comment.created_at|timesince }} ago</span>
           </div>
-          <p style="font-size: 0.95rem; color: var(--text-main);">{{ comment.text }}</p>
-          
-          <button onclick="toggleReply('{{ comment.id }}')" style="background:none; border:none; color:var(--accent-blue); font-size:0.8rem; font-weight:700; margin-top:6px; cursor:pointer; padding:0;">
-            💬 {% trans "Reply" %}
-          </button>
-
-          <div id="reply-form-{{ comment.id }}" class="reply-form-wrapper">
-            <form method="post" action="{% url 'complaints:add_reply' comment.id %}">
-              {% csrf_token %}
-              <input type="text" name="text" placeholder="Write an inline answer response..." style="width:75%; padding:6px; border:1px solid var(--border-color); border-radius:4px;" required />
-              <button type="submit" style="background:var(--accent-blue); color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:700; cursor:pointer;">{% trans "Send" %}</button>
-            </form>
-          </div>
+          <p style="font-size: 0.95rem; color: var(--text-main);">{{ comment.body }}</p>
         </div>
       {% empty %}
         <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">

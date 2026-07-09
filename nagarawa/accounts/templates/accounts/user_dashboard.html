@@ -69,24 +69,61 @@
 <div class="x-workspace-container">
 
   <!-- PANEL 1: LEFT SIDEBAR NAVIGATION NAVIGATION LINKAGES -->
-  <aside class="x-panel-left">
+<aside class="x-panel-left">
     <div class="x-sticky-scroll-box">
       <nav class="x-v-nav">
-        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link active">
           <span class="x-v-icon">🏠</span>
           <span class="x-v-label">{% trans "Feed" %}</span>
         </a>
-        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link active">
-          <span class="x-v-icon">📂</span>
-          <span class="x-v-label">{% trans "My Complaints" %}</span>
+        <a href="{% url 'accounts:notifications' %}" class="x-v-link">
+          <span class="x-v-icon" style="position:relative;">
+            🔔
+            {% if unread_count > 0 %}
+              <span class="x-badge-count">{{ unread_count }}</span>
+            {% endif %}
+          </span>
+          <span class="x-v-label">{% trans "Notifications" %}</span>
         </a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:role_redirect' %}" class="x-v-link">
+            <span class="x-v-icon">📊</span>
+            <span class="x-v-label">{% trans "Dashboard" %}</span>
+          </a>
+          <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+            <span class="x-v-icon">📂</span>
+            <span class="x-v-label">{% trans "My Complaints" %}</span>
+          </a>
+        {% endif %}
       </nav>
       
-      <div style="padding: 0 12px; margin-top: 16px;">
-        <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration: none; text-align: center; display: block;">
-          + {% trans "File Incident" %}
+      {% if user.is_authenticated %}
+        <div style="padding: 0 12px; margin-top: 16px;">
+          <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration: none; text-align: center; display: block;">
+            + {% trans "File Incident" %}
+          </a>
+        </div>
+      {% endif %} 
+
+      
+        {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
         </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
       </div>
+      {% endif %}
+
+
     </div>
   </aside>
 

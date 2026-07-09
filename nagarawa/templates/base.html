@@ -108,20 +108,16 @@
     <div class="x-header-inner">
       
       <!-- Left Side Brand Anchor Layout element -->
-      <a href="{% url 'complaints:feed' %}" class="x-header-brand" style="text-decoration: none;">
-        <span class="x-brand-text" style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; color: var(--accent-blue, #1d9bf0);">
-          {% if CURRENT_LANGUAGE == 'ne' %}सम्पर्क{% else %}Samparka{% endif %}
-        </span>
-      </a>
-
+      <!-- Left Side Brand Anchor Layout element -->
+<a href="{% url 'complaints:feed' %}" class="x-header-brand" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+  <img src="/media/complaints/images/nepal-emblem.png" alt="{% trans 'Nepal Emblem' %}" width="24" height="24" style="object-fit: contain;">
+  <span class="x-brand-text" style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; color: var(--accent-blue, #1d9bf0);">
+    {% if CURRENT_LANGUAGE == 'ne' %}सम्पर्क{% else %}Samparka{% endif %}
+  </span>
+</a>
       <!-- Right Side Context Links & User Navigation Control Modules -->
       <div class="x-header-links">
-        <nav style="display: flex; align-items: center; gap: 8px;">
-          <a href="{% url 'complaints:feed' %}" class="x-nav-item {% if request.resolver_match.app_name == 'complaints' and request.resolver_match.url_name == 'feed' %}active{% endif %}">{% trans "Feed" %}</a>
-          {% if user.is_authenticated %}
-            <a href="{% url 'complaints:my_complaints' %}" class="x-nav-item {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">{% trans "My Workspace" %}</a>
-          {% endif %}
-        </nav>
+        
         
         <div class="x-header-divider" style="height: 24px; width: 1px; background-color: var(--border-color, #eff3f4);"></div>
         

@@ -1,4 +1,3 @@
-﻿#
 msgid ""
 msgstr ""
 "Project-Id-Version: 1.0\n"
@@ -238,7 +237,7 @@ msgid "More"
 msgstr "बढी"
 
 msgid "Notifications"
-msgstr "सूचनाहरू"
+msgstr "सूचना"
 
 msgid "No notifications yet."
 msgstr "अहिलेसम्म कुनै सूचना छैन।"
@@ -282,9 +281,6 @@ msgstr "विभाग अनुसार फिल्टर गर्नुह
 msgid "All"
 msgstr "सबै"
 
-msgid "Your complaint status changed to '%(status)s'"
-msgstr "तपाईंको उजुरीको स्थिति '%(status)s' मा परिवर्तन भयो"
-
 msgid "Total upvotes received"
 msgstr "प्राप्त कुल समर्थनहरू"
 
@@ -296,9 +292,6 @@ msgstr "कुल हेराइहरू"
 
 msgid "Avg. engagement / complaint"
 msgstr "औसत सहभागिता / उजुरी"
-
-msgid "Your complaint status changed to '%(status)s'"
-msgstr "तपाईंको उजुरीको स्थिति '%(status)s' मा परिवर्तन भयो"
 
 msgid "District set"
 msgstr "जिल्ला सेट भयो"
@@ -376,7 +369,7 @@ msgid "Complaint assigned to %(name)s."
 msgstr "उजुरी %(name)s लाई तोकियो।"
 
 msgid "Cannot notify an anonymous author."
-msgstr "अज्ञात लेखकलाई सूचित गर्न सकिँदैन।"
+msgstr "अज्ञान लेखकलाई सूचित गर्न सकिँदैन।"
 
 msgid "Message cannot be empty."
 msgstr "सन्देश खाली हुन सक्दैन।"
@@ -428,9 +421,6 @@ msgstr "विचाराधीन उजुरीहरू मात्र फ
 msgid "Complaint withdrawn successfully."
 msgstr "उजुरी सफलतापूर्वक फिर्ता लिइयो।"
 
-msgid "Notifications"
-msgstr "सूचना"
-
 msgid "+ New Complaint "
 msgstr "+ नयाँ उजुरी "
 
@@ -460,13 +450,16 @@ msgstr "यो उजुरी अस्वीकार गर्ने हो?"
 
 msgid "Reject"
 msgstr "अस्वीकार गर्नुहोस्"
+
 msgid "View →"
 msgstr "हेर्नुहोस् →"
+
 msgid "You haven't posted any complaints yet."
 msgstr "तपाईंले हालसम्म कुनै उजुरी पेश गर्नुभएको छैन।"
 
 msgid "Post Your First Complaint"
 msgstr "आफ्नो पहिलो उजुरी पेश गर्नुहोस्"
+
 msgid "Superadmin Dashboard"
 msgstr "सुपरएडमिन ड्यासबोर्ड"
 
@@ -475,23 +468,21 @@ msgstr "सबै विभागका सम्पूर्ण उजुरी
 
 msgid "Admin Panel →"
 msgstr "एडमिन प्यानल →"
+
 msgid "Department"
 msgstr "विभाग"
 
 msgid "Posted by"
 msgstr "पेश गर्ने"
+
 msgid "Status / Date"
 msgstr "स्थिति / मिति"
 
 msgid "Message"
 msgstr "सन्देश"
 
-msgid "No complaints found."
-msgstr "कुनै उजुरी फेला परेन।"
 msgid "Complaint"
 msgstr "उजुरी"
-msgid "Notifications"
-msgstr "सूचना"
 
 msgid "%(count)s notification"
 msgid_plural "%(count)s notifications"
@@ -503,3 +494,27 @@ msgstr "तपाईंसँग हालसम्म कुनै सूचन
 
 msgid "Stay updated with replies, status changes and important announcements."
 msgstr "जवाफ, स्थिति परिवर्तन र महत्त्वपूर्ण घोषणाहरूको जानकारी पाउनुहोस्।"
+
+msgid "Submission Protocols"
+msgstr "दर्ताका नियमहरू"
+
+msgid "Verify the issue falls within municipal jurisdiction."
+msgstr "समस्या नगरपालिकाको कार्यक्षेत्र भित्र पर्छ भन्ने कुरा यकिन गर्नुहोस्।"
+
+msgid "Attach clear, recent photos as evidence."
+msgstr "प्रमाणको रूपमा स्पष्ट र भर्खरै खिचिएका तस्बिरहरू संलग्न गर्नुहोस्।"
+
+msgid "Provide an accurate location for faster routing."
+msgstr "छिटो कारबाहीको लागि सही स्थान (लोकेसन) उपलब्ध गराउनुहोस्।"
+
+msgid "Search existing reports first to avoid duplicate filings."
+msgstr "एउटै समस्या दोहोरिएर दर्ता हुनबाट जोगाउन पहिले नै दर्ता भएका रिपोर्टहरू खोज्नुहोस्।"
+
+msgid "Keep descriptions factual and free of abusive language."
+msgstr "विवरण तथ्यपरक राख्नुहोस् र गालीगलौज वा अभद्र भाषाको प्रयोग नगर्नुहोस्।"
+
+msgid "Trending Threads"
+msgstr "ट्रेन्डिङ छलफलहरू"
+
+msgid "No trending threads yet."
+msgstr "अहिलेसम्म कुनै पनि ट्रेन्डिङ छलफलहरू छैनन्।"

@@ -10,6 +10,12 @@ from comments.models import Comment
 from comments.forms import CommentForm
 from django.utils import timezone
 from django.db import models
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
+from weasyprint import HTML
+from complaints.models import Complaint #watch
 
 
 def feed_view(request):
@@ -45,10 +51,15 @@ def feed_view(request):
         user_votes = {v.complaint_id: v.value for v in Vote.objects.filter(user=request.user)}
         for c in complaints_page:
             c.user_vote = user_votes.get(c.id)
-    
+
+    # Trending Threads — top 3 by vote_score, independent of filters/pagination
+    trending_pool = Complaint.objects.select_related('author', 'department').prefetch_related('votes')
+    trending_complaints = sorted(trending_pool, key=lambda c: c.vote_score, reverse=True)[:3]
+
     return render(request, 'complaints/feed.html', {
         'complaints': complaints_page,
         'filter_form': form,
+        'trending_complaints': trending_complaints,
     })
 
 
@@ -162,3 +173,23 @@ def vote_view(request, pk):
 def my_complaints(request):
     complaints = request.user.complaints.select_related('department').order_by('-created_at')
     return render(request, 'complaints/my_complaints.html', {'complaints': complaints})
+
+
+@login_required
+def export_single_complaint_pdf(request, pk):
+    # Fetch the specific complaint or return a 404
+    complaint = get_object_or_404(Complaint, pk=pk)
+    
+    # Render a dedicated, print-optimized template
+    context = {'complaint': complaint}
+    html_string = render_to_string('complaints/single_complaint_pdf.html', context, request=request)
+    
+    # Create the HTTP response structure
+    response = HttpResponse(content_type='application/pdf')
+    # Clean up the filename by removing spaces
+    safe_title = "".join(c for c in complaint.title if c.isalnum() or c in (' ', '_', '-')).rstrip()
+    response['Content-Disposition'] = f'inline; filename="Incident_Report_{complaint.pk}_{safe_title[:20]}.pdf"'
+    
+    # Render HTML string into binary PDF format via WeasyPrint
+    HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
+    return response

@@ -5,6 +5,7 @@
 {% block title %}{{ department.name }} — {% trans "Admin" %}{% endblock %}
 
 {% block extra_head %}
+
 <style>
   .x-global-header {
     position: sticky !important;
@@ -64,6 +65,9 @@
   </aside>
 
   <main class="x-panel-center">
+    
+    
+
 
     <div class="x-center-filter-row" style="position: static; display: block; padding: 16px;">
       <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
@@ -128,7 +132,19 @@
               </div>
             </div>
 
-            <a href="{{ complaint.get_absolute_url }}" class="x-pill-action-btn" style="text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-main); background: #fff; padding: 6px 12px; margin-left: auto;">{% trans "View Details" %} &rarr;</a>
+            <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
+              <a href="{% url 'complaints:export_single_complaint_pdf' pk=complaint.pk %}" 
+                 target="_blank" 
+                 class="x-pill-action-btn" 
+                 style="text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-main); background: #fff; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px;">
+                📄 {% trans "PDF Report" %}
+              </a>
+              <a href="{{ complaint.get_absolute_url }}" 
+                 class="x-pill-action-btn" 
+                 style="text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-main); background: #fff; padding: 6px 12px; display: inline-flex; align-items: center;">
+                {% trans "View Details" %} &rarr;
+              </a>
+            </div>
           </div>
 
           <div style="background-color: var(--bg-subtle, #f7f9fa); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">

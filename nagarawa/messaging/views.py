@@ -9,19 +9,41 @@ from .models import Conversation, Message
 from .forms import MessageForm, StartConversationForm
 
 
-def _get_staff_user():
-    """Return the first available staff user to assign new conversations to."""
+def _get_staff_user(complaint=None):
+    """
+    Return the staff user to assign a new conversation to.
+    Priority:
+      1. If the complaint has a department, find that department's admin
+         via UserProfile (is_department_admin=True, department=complaint.department).
+      2. Otherwise fall back to a superuser, then any active staff user.
+    """
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    staff = User.objects.filter(is_staff=True, is_active=True).first()
-    return staff
+
+    if complaint and getattr(complaint, 'department', None):
+        dept_admin = User.objects.filter(
+            is_staff=True,
+            is_active=True,
+            userprofile__is_department_admin=True,
+            userprofile__department=complaint.department,
+        ).first()
+        if dept_admin:
+            return dept_admin
+
+    # Fallback: superuser first, then any active staff
+    superadmin = User.objects.filter(
+        is_staff=True, is_active=True, is_superuser=True
+    ).first()
+    if superadmin:
+        return superadmin
+
+    return User.objects.filter(is_staff=True, is_active=True).first()
 
 
 @login_required
 def inbox(request):
     """Show all conversations for the current user."""
     user = request.user
-
     if user.is_staff:
         # Staff see ALL conversations
         conversations = Conversation.objects.select_related(
@@ -192,7 +214,7 @@ def start_conversation(request, complaint_pk=None):
         if existing:
             return redirect('messaging:conversation', pk=existing.pk)
 
-    staff_user = _get_staff_user()
+    staff_user = _get_staff_user(complaint)
     if not staff_user:
         django_messages.error(request, 'No staff members are available right now. Please try again later.')
         return redirect('complaints:feed')
@@ -234,9 +256,11 @@ def close_conversation(request, pk):
     """Staff can close a conversation."""
     if not request.user.is_staff:
         return JsonResponse({'error': 'Only staff can close conversations.'}, status=403)
+
     conv = get_object_or_404(Conversation, pk=pk)
     conv.is_closed = True
     conv.save(update_fields=['is_closed', 'updated_at'])
+
     django_messages.success(request, 'Conversation closed.')
     return redirect('messaging:inbox')
 
@@ -247,9 +271,11 @@ def reopen_conversation(request, pk):
     """Staff can reopen a closed conversation."""
     if not request.user.is_staff:
         return JsonResponse({'error': 'Only staff can reopen conversations.'}, status=403)
+
     conv = get_object_or_404(Conversation, pk=pk)
     conv.is_closed = False
     conv.save(update_fields=['is_closed', 'updated_at'])
+
     django_messages.success(request, 'Conversation reopened.')
     return redirect('messaging:conversation', pk=pk)
 

@@ -45,6 +45,46 @@
     opacity: 0.9;
   }
 </style>
+
+
+
+<style>
+  /* existing styles unchanged... */
+
+  /* Only the feed list scrolls, filter row stays fixed */
+  .x-feed-stream-container {
+    height: calc(100vh - var(--header-h, 60px) - var(--filter-row-h, 64px));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Right panel scrolls independently, in full */
+  .x-panel-right {
+    height: calc(100vh - var(--header-h, 60px));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .x-feed-stream-container::-webkit-scrollbar,
+  .x-panel-right::-webkit-scrollbar {
+    width: 6px;
+  }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var header = document.querySelector('.x-global-header');
+    var filterRow = document.querySelector('.x-center-filter-row');
+    if (header) {
+      document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+    }
+    if (filterRow) {
+      document.documentElement.style.setProperty('--filter-row-h', filterRow.offsetHeight + 'px');
+    }
+  });
+</script> 
+
+
+
 {% endblock %}
 
 {% block content %}
@@ -215,19 +255,19 @@
             <div style="display: flex; align-items: center; gap: 20px; margin-top: 14px; padding-top: 4px; font-size: 0.85rem; color: var(--text-muted);">
               
               <!-- Upvote Score Computation Box Wrapper Container -->
-              <div style="display: flex; align-items: center; gap: 4px; background: var(--bg-subtle, #f7f9fa); padding: 4px 10px; border-radius: 16px;">
-                {% if user.is_authenticated %}
-                  <button class="vote-btn vote-up {% if complaint.user_vote == 1 %}active-up{% endif %}" style="background: none; border: none; cursor: pointer; padding: 2px 4px; font-size: 0.9rem;" onclick="handleVote({{ complaint.id }}, 1)" title="{% trans 'Upvote' %}">
-                    ▲ <span style="font-weight: 700; font-size: 0.8rem;">{{ complaint.upvote_count }}</span>
-                  </button>
-                  <span style="font-weight: 800; color: var(--text-main); padding: 0 2px;">{{ complaint.vote_score }}</span>
-                  <button class="vote-btn vote-down {% if complaint.user_vote == -1 %}active-down{% endif %}" style="background: none; border: none; cursor: pointer; padding: 2px 4px; font-size: 0.9rem;" onclick="handleVote({{ complaint.id }}, -1)" title="{% trans 'Downvote' %}">
-                    ▼ <span style="font-weight: 700; font-size: 0.8rem;">{{ complaint.downvote_count }}</span>
-                  </button>
-                {% else %}
-                  <span style="font-weight: 600;">▲ {{ complaint.upvote_count }} &middot; ▼ {{ complaint.downvote_count }}</span>
-                {% endif %}
-              </div>
+              <div class="vote-group">
+              {% if user.is_authenticated %}
+                <button class="vote-btn vote-up {% if complaint.user_vote == 1 %}active-up{% endif %}" onclick="handleVote({{ complaint.id }}, 1)" title="{% trans 'Upvote' %}">
+                  ▲ <span>
+                </button>
+                <span class="vote-score">{{ complaint.vote_score }}</span>
+                <button class="vote-btn vote-down {% if complaint.user_vote == -1 %}active-down{% endif %}" onclick="handleVote({{ complaint.id }}, -1)" title="{% trans 'Downvote' %}">
+                  ▼ <span>
+                </button>
+              {% else %}
+                <span class="footer-action">▲ {{ complaint.upvote_count }} &nbsp; ▼ {{ complaint.downvote_count }}</span>
+              {% endif %}
+            </div>
 
               <!-- Comment Count Indicator Redirection link -->
               <a href="{{ complaint.get_absolute_url }}#comments" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 4px; font-weight: 600;">
@@ -280,20 +320,7 @@
     <div class="x-sticky-scroll-box">
       
       <!-- Departments Operational Counts Directory Widget -->
-      <section class="x-right-panel-widget">
-        <h4 class="x-widget-panel-title">{% trans "Active Sectors" %}</h4>
-        <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 8px;">
-          {% for dept in departments %}
-            <a href="?department={{ dept.id }}" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; border-radius: 8px; text-decoration: none; color: var(--text-main); font-size: 0.88rem; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
-              <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                <span style="font-size: 1.05rem;">{{ dept.icon }}</span>
-                <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ dept.display_name }}</span>
-              </div>
-              <span style="font-size: 0.75rem; background: var(--border-color, #eff3f4); padding: 2px 8px; border-radius: 10px; font-weight: 700; color: var(--text-muted);">{{ dept.complaint_count }}</span>
-            </a>
-          {% endfor %}
-        </div>
-      </section>
+  
 
       <!-- Trending Threads Snippet Widget -->
       <section class="x-right-panel-widget" style="margin-top: 20px;">
@@ -315,17 +342,17 @@
         </div>
       </section>
 
-      <!-- Complaint Submission Protocols Guidance Widget -->
-      <section class="x-right-panel-widget" style="margin-top: 20px;">
-        <h4 class="x-widget-panel-title">{% trans "Submission Protocols" %}</h4>
-        <ul style="margin: 8px 0 0 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-main); line-height: 1.6;">
-          <li>{% trans "Verify the issue falls within municipal jurisdiction." %}</li>
-          <li>{% trans "Attach clear, recent photos as evidence." %}</li>
-          <li>{% trans "Provide an accurate location for faster routing." %}</li>
-          <li>{% trans "Search existing reports first to avoid duplicate filings." %}</li>
-          <li>{% trans "Keep descriptions factual and free of abusive language." %}</li>
-        </ul>
-      </section>
+     <!-- Complaint Submission Protocols Guidance Widget -->
+<section class="x-right-panel-widget" style="margin-top: 20px;">
+  <h4 class="x-widget-panel-title">{% trans "Submission Protocols" %}</h4>
+  <ul style="margin: 8px 0 0 0; padding-left: 18px; font-size: 0.82rem; color: var(--text-main); line-height: 1.6;">
+    <li>{% trans "Verify the issue falls within municipal jurisdiction." %}</li>
+    <li>{% trans "Attach clear, recent photos as evidence." %}</li>
+    <li>{% trans "Provide an accurate location for faster routing." %}</li>
+    <li>{% trans "Search existing reports first to avoid duplicate filings." %}</li>
+    <li>{% trans "Keep descriptions factual and free of abusive language." %}</li>
+  </ul>
+</section>
 
       <!-- Social Handles Widget (links to be added) -->
       <section class="x-right-panel-widget" style="margin-top: 20px;">

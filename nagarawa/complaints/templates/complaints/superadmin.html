@@ -3,127 +3,183 @@
 {% load i18n %}
 {% block title %}{% trans "Superadmin Dashboard" %}{% endblock %}
 
+
 {% block content %}
-<div class="container" style="max-width: 960px; padding: 1.5rem 1rem; margin: 0 auto;">
+<div class="x-workspace-container">
 
-  <!-- Dashboard Top Header -->
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
-    <div>
-      <h1 style="font-family: var(--font, sans-serif); font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; color: var(--text-main, #111827);">
-        {% trans "Superadmin Dashboard" %}
-      </h1>
-      <p class="text-muted" style="font-size: 0.85rem; margin: 0; color: var(--text-muted, #6B7280);">
-        {% trans "All complaints across every department" %}
-      </p>
+  <!-- PANEL 1: LEFT SIDEBAR NAVIGATION -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        <a href="{% url 'accounts:role_redirect' %}" class="x-v-link active">
+          <span class="x-v-icon">📊</span>
+          <span class="x-v-label">{% trans "Dashboard" %}</span>
+        </a>
+        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+          <span class="x-v-icon">📂</span>
+          <span class="x-v-label">{% trans "My Complaints" %}</span>
+        </a>
+      </nav>
     </div>
-    <a href="{% url 'admin:index' %}" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 500;">
-      {% trans "Admin Panel" %} <span>→</span>
-    </a>
-  </div>
+  </aside>
 
-  <!-- Responsive Statistics Grid -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem;">
-    <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
-      <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Total" %}</div>
-      <div style="font-size: 1.6rem; font-weight: 700;">{{ total }}</div>
-    </div>
-    <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
-      <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Pending" %}</div>
-      <div style="font-size: 1.6rem; font-weight: 700; color: var(--warning, #D97706);">{{ pending_count }}</div>
-    </div>
-    <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
-      <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "In Progress" %}</div>
-      <div style="font-size: 1.6rem; font-weight: 700; color: var(--info, #2563EB);">{{ in_progress_count }}</div>
-    </div>
-    <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
-      <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Resolved" %}</div>
-      <div style="font-size: 1.6rem; font-weight: 700; color: var(--success, #059669);">{{ resolved_count }}</div>
-    </div>
-    <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
-      <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Rejected" %}</div>
-      <div style="font-size: 1.6rem; font-weight: 700; color: var(--danger, #DC2626);">{{ rejected_count }}</div>
-    </div>
-  </div>
+  <!-- PANEL 2: CENTER WORKSPACE (unchanged) -->
+  <main class="x-panel-center">
+    <div class="container" style="max-width: 100%; padding: 1.5rem 1rem; margin: 0;">
 
-  <!-- Department Navigation Bar -->
-  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border, #E5E7EB); padding-bottom: 0.75rem;">
-    <a href="?" class="btn {% if not selected_dept %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="border-radius: 6px;">
-      {% trans "All" %}
-    </a>
-    {% for dept in departments %}
-    <a href="?dept={{ dept.id }}"
-       class="btn {% if selected_dept == dept.id|stringformat:'s' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm"
-       style="border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
-      <span>{{ dept.icon }}</span><span>{{ dept.name }}</span>
-    </a>
-    {% endfor %}
-  </div>
+      <!-- Dashboard Top Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <h1 style="font-family: var(--font, sans-serif); font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; color: var(--text-main, #111827);">
+            {% trans "Superadmin Dashboard" %}
+          </h1>
+          <p class="text-muted" style="font-size: 0.85rem; margin: 0; color: var(--text-muted, #6B7280);">
+            {% trans "All complaints across every department" %}
+          </p>
+        </div>
+      </div>
 
-  <!-- Complaint Data Table Structure -->
-  <div style="border: 1px solid var(--border, #E5E7EB); border-radius: 8px; overflow: hidden; background: var(--bg-card, #FFF);">
-    
-    <!-- Table Header Row -->
-    <div style="display: flex; gap: 16px; align-items: center; padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: var(--text-muted, #6B7280); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border, #E5E7EB); background: var(--bg-th, #F9FAFB);">
-      <div style="flex: 2.5; min-width: 0;">{% trans "Complaint" %}</div>
-      <div style="flex: 1.2; min-width: 0;">{% trans "Department" %}</div>
-      <div style="flex: 1.2; min-width: 0;">{% trans "Posted by" %}</div>
-      <div style="width: 130px; text-align: right;">{% trans "Status / Date" %}</div>
-    </div>
 
-    <!-- Data Rows Container -->
-    <div class="my-list">
-      {% for complaint in complaints %}
-      <div class="my-item" style="display: flex; align-items: center; gap: 16px; padding: 1rem; border-bottom: 1px solid var(--border, #E5E7EB); transition: background-color 0.15s ease;">
+      <!-- Responsive Statistics Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 2rem;">
+        <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
+          <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Total" %}</div>
+          <div style="font-size: 1.6rem; font-weight: 700;">{{ total }}</div>
+        </div>
+        <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
+          <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Pending" %}</div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: var(--warning, #D97706);">{{ pending_count }}</div>
+        </div>
+        <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
+          <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "In Progress" %}</div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: var(--info, #2563EB);">{{ in_progress_count }}</div>
+        </div>
+        <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
+          <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Resolved" %}</div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: var(--success, #059669);">{{ resolved_count }}</div>
+        </div>
+        <div class="card" style="padding: 1rem; text-align: center; border-radius: 8px; border: 1px solid var(--border, #E5E7EB); background: var(--bg-card, #FFF);">
+          <div class="text-muted" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">{% trans "Rejected" %}</div>
+          <div style="font-size: 1.6rem; font-weight: 700; color: var(--danger, #DC2626);">{{ rejected_count }}</div>
+        </div>
+      </div>
+
+      <!-- Department Navigation Bar -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border, #E5E7EB); padding-bottom: 0.75rem;">
+        <a href="?" class="btn {% if not selected_dept %}btn-primary{% else %}btn-ghost{% endif %} btn-sm" style="border-radius: 6px;">
+          {% trans "All" %}
+        </a>
+        {% for dept in departments %}
+        <a href="?dept={{ dept.id }}"
+           class="btn {% if selected_dept == dept.id|stringformat:'s' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm"
+           style="border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+          <span>{{ dept.icon }}</span><span>{{ dept.name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Complaint Data Table Structure -->
+      <div style="border: 1px solid var(--border, #E5E7EB); border-radius: 8px; overflow: hidden; background: var(--bg-card, #FFF);">
         
-        <!-- Complaint Column: Prevents Title Overlap -->
-        <div style="flex: 2.5; min-width: 0; display: flex; align-items: center; gap: 8px;">
-          <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.925rem; font-weight: 500;">
-            <a href="{{ complaint.get_absolute_url }}" style="color: var(--text-link, #2563EB); text-decoration: none;">
-              {{ complaint.title }}
-            </a>
+        <!-- Table Header Row -->
+        <div style="display: flex; gap: 16px; align-items: center; padding: 0.85rem 1rem; font-size: 0.75rem; font-weight: 700; color: var(--text-muted, #6B7280); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border, #E5E7EB); background: var(--bg-th, #F9FAFB);">
+          <div style="flex: 2.5; min-width: 0;">{% trans "Complaint" %}</div>
+          <div style="flex: 1.2; min-width: 0;">{% trans "Department" %}</div>
+          <div style="flex: 1.2; min-width: 0;">{% trans "Posted by" %}</div>
+          <div style="width: 130px; text-align: right;">{% trans "Status / Date" %}</div>
+        </div>
+
+        <!-- Data Rows Container -->
+        <div class="my-list">
+          {% for complaint in complaints %}
+          <div class="my-item" style="display: flex; align-items: center; gap: 16px; padding: 1rem; border-bottom: 1px solid var(--border, #E5E7EB); transition: background-color 0.15s ease;">
+            
+            <!-- Complaint Column: Prevents Title Overlap -->
+            <div style="flex: 2.5; min-width: 0; display: flex; align-items: center; gap: 8px;">
+              <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.925rem; font-weight: 500;">
+                <a href="{{ complaint.get_absolute_url }}" style="color: var(--text-link, #2563EB); text-decoration: none;">
+                  {{ complaint.title }}
+                </a>
+              </div>
+              {% if complaint.pk in complaints_with_messages %}
+              <a href="{% url 'messaging:inbox' %}" style="background: #EFF6FF; color: #1D4ED8; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">
+                💬 <span>{% trans "Message" %}</span>
+              </a>
+              {% endif %}
+            </div>
+
+            <!-- Department Column -->
+            <div style="flex: 1.2; min-width: 0; font-size: 0.85rem; color: var(--text-muted, #4B5563); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {% if complaint.department %}{{ complaint.department.icon }} {{ complaint.department.name }}{% else %}<span style="color: var(--text-light, #9CA3AF);">—</span>{% endif %}
+            </div>
+
+            <!-- Author Column -->
+            <div style="flex: 1.2; min-width: 0; font-size: 0.85rem; color: var(--text-muted, #4B5563); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {% if complaint.is_anonymous %}
+                <span style="color: var(--text-light, #9CA3AF); font-style: italic;">{% trans "Anonymous" %}</span>
+              {% else %}
+                {{ complaint.author.display_name }}
+              {% endif %}
+            </div>
+
+            <!-- Status Tag and Meta Date Column -->
+            <div style="width: 130px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <span class="status-badge status-{{ complaint.status }}" style="font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
+                {{ complaint.get_status_display }}
+              </span>
+              <span class="text-muted" style="font-size: 0.75rem; color: var(--text-light, #9CA3AF);">
+                {{ complaint.created_at|date:"M d" }}
+              </span>
+            </div>
+
           </div>
-          {% if complaint.pk in complaints_with_messages %}
-          <a href="{% url 'messaging:inbox' %}" style="background: #EFF6FF; color: #1D4ED8; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px;">
-            💬 <span>{% trans "Message" %}</span>
-          </a>
-          {% endif %}
-        </div>
-
-        <!-- Department Column -->
-        <div style="flex: 1.2; min-width: 0; font-size: 0.85rem; color: var(--text-muted, #4B5563); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          {% if complaint.department %}{{ complaint.department.icon }} {{ complaint.department.name }}{% else %}<span style="color: var(--text-light, #9CA3AF);">—</span>{% endif %}
-        </div>
-
-        <!-- Author Column -->
-        <div style="flex: 1.2; min-width: 0; font-size: 0.85rem; color: var(--text-muted, #4B5563); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          {% if complaint.is_anonymous %}
-            <span style="color: var(--text-light, #9CA3AF); font-style: italic;">{% trans "Anonymous" %}</span>
-          {% else %}
-            {{ complaint.author.display_name }}
-          {% endif %}
-        </div>
-
-        <!-- Status Tag and Meta Date Column -->
-        <div style="width: 130px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-          <span class="status-badge status-{{ complaint.status }}" style="font-size: 0.75rem; font-weight: 600; padding: 2px 6px; border-radius: 4px;">
-            {{ complaint.get_status_display }}
-          </span>
-          <span class="text-muted" style="font-size: 0.75rem; color: var(--text-light, #9CA3AF);">
-            {{ complaint.created_at|date:"M d" }}
-          </span>
+          {% empty %}
+          <!-- Empty State Section -->
+          <div class="empty-state" style="padding: 3.5rem 1rem; text-align: center;">
+            <div class="empty-icon" style="font-size: 2.2rem; margin-bottom: 0.75rem;">📭</div>
+            <p style="color: var(--text-muted, #6B7280); font-size: 0.9rem; margin: 0;">{% trans "No complaints found." %}</p>
+          </div>
+          {% endfor %}
         </div>
 
       </div>
-      {% empty %}
-      <!-- Empty State Section -->
-      <div class="empty-state" style="padding: 3.5rem 1rem; text-align: center;">
-        <div class="empty-icon" style="font-size: 2.2rem; margin-bottom: 0.75rem;">📭</div>
-        <p style="color: var(--text-muted, #6B7280); font-size: 0.9rem; margin: 0;">{% trans "No complaints found." %}</p>
-      </div>
-      {% endfor %}
+
     </div>
+  </main>
 
-  </div>
+  <!-- PANEL 3: RIGHT SIDEBAR -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+
+      <!-- Quick Actions Widget -->
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Quick Actions" %}</h4>
+        <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 8px;">
+          <a href="{% url 'admin:index' %}" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; text-decoration: none; color: var(--text-main); font-size: 0.88rem; font-weight: 600;" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+            🛠️ {% trans "Admin Panel" %}
+          </a>
+          <a href="{% url 'accounts:export_csv' %}" style="display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; text-decoration: none; color: var(--text-main); font-size: 0.88rem; font-weight: 600;" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+            📄 {% trans "Export CSV" %}
+          </a>
+        </div>
+      </section>
+
+      <!-- Current User Profile Widget -->
+      <section class="x-right-panel-widget" style="margin-top: 20px;">
+        <a href="{% url 'accounts:profile' username=user.username %}" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; text-decoration: none; color: var(--text-main);" onmouseover="this.style.background='var(--bg-subtle)'" onmouseout="this.style.background='transparent'">
+          <div class="complaint-author-avatar" style="min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; background: var(--bg-subtle); font-weight: 700;">
+            {% if user.avatar %}<img src="{{ user.avatar.url }}" style="width: 100%; height: 100%; object-fit: cover;" />{% else %}{{ user.username|first|upper }}{% endif %}
+          </div>
+          <span style="font-weight: 700; font-size: 0.88rem;">{{ user.display_name|default:user.username }}</span>
+        </a>
+      </section>
+
+    </div>
+  </aside>
 
 </div>
 {% endblock %}
