@@ -139,6 +139,7 @@ def conversation_detail(request, pk):
         'msg_form': msg_form,
         'all_messages': all_messages,
         'other_user': conv.get_other_participant(user),
+        'can_manage': user.is_superuser or _is_dept_admin(user),
     })
 
 
@@ -229,10 +230,12 @@ def poll_messages(request, pk):
 def start_conversation(request, complaint_pk=None):
     """
     Citizen starts a new conversation, routed to the department admin
-    responsible for the complaint's department (falls back to any staff
-    member for general enquiries or unassigned departments).
+    responsible for the complaint's department. If there's no complaint
+    (general enquiry), the citizen picks a department first, and the
+    message routes to that department's admin instead of the superadmin.
     """
     from complaints.models import Complaint
+    from departments.models import Department
 
     complaint = None
     if complaint_pk:
@@ -251,24 +254,51 @@ def start_conversation(request, complaint_pk=None):
         if existing:
             return redirect('messaging:conversation', pk=existing.pk)
 
-    staff_user = _get_department_admin(complaint)
-    if not staff_user:
-        if complaint and complaint.department:
-            django_messages.error(
-                request,
-                _('The %(dept)s department does not have an admin assigned yet. Please try again later.')
-                % {'dept': complaint.department.display_name}
-            )
-        else:
-            django_messages.error(request, _('No staff members are available right now. Please try again later.'))
-        return redirect('complaints:feed')
+    departments = Department.objects.filter(is_active=True).order_by('name') if not complaint else None
 
     if request.method == 'POST':
         form = StartConversationForm(request.POST)
+
+        # Resolve staff_user AFTER validating input, using the picked
+        # department for general enquiries instead of falling back blindly.
+        staff_user = None
+        selected_department = None
+        if complaint:
+            staff_user = _get_department_admin(complaint)
+        else:
+            dept_id = request.POST.get('department')
+            if not dept_id:
+                django_messages.error(request, _('Please select a department.'))
+                return render(request, 'messaging/start_conversation.html', {
+                    'form': form, 'complaint': complaint, 'departments': departments,
+                })
+            selected_department = get_object_or_404(Department, pk=dept_id)
+            profile = UserProfile.objects.filter(
+                department=selected_department, is_department_admin=True, user__is_active=True
+            ).select_related('user').first()
+            staff_user = profile.user if profile else None
+
+        if not staff_user:
+            dept_name = complaint.department.display_name if complaint and complaint.department else (
+                selected_department.display_name if selected_department else None
+            )
+            if dept_name:
+                django_messages.error(
+                    request,
+                    _('The %(dept)s department does not have an admin assigned yet. Please try again later.') % {'dept': dept_name}
+                )
+            else:
+                django_messages.error(request, _('No staff members are available right now. Please try again later.'))
+            return render(request, 'messaging/start_conversation.html', {
+                'form': form, 'complaint': complaint, 'departments': departments,
+            })
+
         if form.is_valid():
             subject = form.cleaned_data.get('subject', '')
             if not subject and complaint:
                 subject = f'Re: {complaint.title}'
+            elif not subject and selected_department:
+                subject = f'{selected_department.display_name} — General Enquiry'
 
             conv = Conversation.objects.create(
                 participant_citizen=request.user,
@@ -282,7 +312,6 @@ def start_conversation(request, complaint_pk=None):
                 body=form.cleaned_data['body']
             )
 
-            # Notify the department admin (or fallback staff) about the new conversation
             _notify(
                 staff_user,
                 title=_('New conversation from %(sender)s') % {'sender': request.user.display_name},
@@ -299,7 +328,7 @@ def start_conversation(request, complaint_pk=None):
     return render(request, 'messaging/start_conversation.html', {
         'form': form,
         'complaint': complaint,
-        'staff_user': staff_user,
+        'departments': departments,
     })
 
 

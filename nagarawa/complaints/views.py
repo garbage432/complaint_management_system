@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-#from weasyprint import HTML
+from weasyprint import HTML
 from complaints.models import Complaint #watch
 
 
@@ -191,5 +191,5 @@ def export_single_complaint_pdf(request, pk):
     response['Content-Disposition'] = f'inline; filename="Incident_Report_{complaint.pk}_{safe_title[:20]}.pdf"'
     
     # Render HTML string into binary PDF format via WeasyPrint
-   # HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
+    HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
     return response
