@@ -203,16 +203,31 @@ def superadmin_dashboard(request):
 
 # ── dept admin dashboard ──────────────────────────────────────────────────
 
+# ── dept admin dashboard ──────────────────────────────────────────────────
+
 @login_required
 def deptadmin_dashboard(request):
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    from messaging.models import Conversation
+
+    profile, _p = UserProfile.objects.get_or_create(user=request.user)
     base = Complaint.objects.filter(department=profile.department).select_related('author')
 
     selected_status = request.GET.get('status')
     complaints = base.filter(status=selected_status) if selected_status else base
+    complaints = list(complaints.order_by('-created_at').prefetch_related('status_logs'))
+
+    # Map complaint_id -> conversation_id for open conversations assigned to
+    # THIS dept admin, so the template can link straight to the thread.
+    conv_map = dict(
+        Conversation.objects.filter(participant_staff=request.user, is_closed=False)
+        .exclude(complaint=None)
+        .values_list('complaint_id', 'id')
+    )
+    for c in complaints:
+        c.conversation_pk = conv_map.get(c.pk)
 
     return render(request, "complaints/deptadmin.html", {
-        "complaints": complaints.order_by('-created_at').prefetch_related('status_logs'),
+        "complaints": complaints,
         "department": profile.department,
         "selected_status": selected_status,
         "total":             base.count(),
@@ -222,29 +237,6 @@ def deptadmin_dashboard(request):
         "solved_count":      base.filter(status='solved').count(),
         "rejected_count":    base.filter(status='rejected').count(),
     })
-
-
-# ── helpers ───────────────────────────────────────────────────────────────
-
-def _is_dept_admin(user):
-    try:
-        return user.userprofile.is_department_admin
-    except Exception:
-        return False
-
-
-def _send_notification(recipient, title, body, link=''):
-    Notification.objects.create(
-        recipient=recipient, title=title, body=body, link=link
-    )
-    if recipient.email:
-        send_mail(
-            subject=f"[Samparka] {title}",
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient.email],
-            fail_silently=True,
-        )
 
 
 # ── update status ─────────────────────────────────────────────────────────
