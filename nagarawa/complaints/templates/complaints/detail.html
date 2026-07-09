@@ -98,6 +98,13 @@
         </div>
       {% endif %}
 
+      {% if user.is_authenticated %}
+    <a href="{% url 'messaging:start_for_complaint' complaint.pk %}"
+       class="x-pill-action-btn">
+        💬 {% trans "Message Department" %}
+    </a>
+{% endif %}
+
       {% for comment in complaint.comments.all %}
         <div class="comment-block">
           <div style="font-size: 0.88rem; margin-bottom: 4px;">

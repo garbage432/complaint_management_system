@@ -1,56 +1,86 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages as django_messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.db.models import Q
 from .models import Conversation, Message
 from .forms import MessageForm, StartConversationForm
 
+from django.conf import settings
+from django.core.mail import send_mail
 
-def _get_staff_user(complaint=None):
+from complaints.models import Notification
+from departments.models import UserProfile
+
+
+def _notify(recipient, title, body='', link=''):
+    """Create a notification and email it, matching accounts/views.py's _send_notification pattern."""
+    if recipient is None:
+        return
+    Notification.objects.create(
+        recipient=recipient, title=title, body=body, link=link
+    )
+    if recipient.email:
+        send_mail(
+            subject=f"[Samparka] {title}",
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient.email],
+            fail_silently=True,
+        )
+
+
+def _is_dept_admin(user):
+    """Matches the helper already defined in accounts/views.py."""
+    try:
+        return user.userprofile.is_department_admin
+    except Exception:
+        return False
+
+
+def _get_department_admin(complaint=None):
     """
-    Return the staff user to assign a new conversation to.
-    Priority:
-      1. If the complaint has a department, find that department's admin
-         via UserProfile (is_department_admin=True, department=complaint.department).
-      2. Otherwise fall back to a superuser, then any active staff user.
+    Resolve who should handle a conversation:
+    - If the complaint has a department, route to that department's admin
+      (UserProfile.is_department_admin=True for that department).
+    - If the department has no admin assigned, return None — the caller
+      should show an error rather than silently routing to superadmin.
+    - Only general enquiries (no complaint at all) fall back to the superuser.
     """
     from django.contrib.auth import get_user_model
     User = get_user_model()
 
-    if complaint and getattr(complaint, 'department', None):
-        dept_admin = User.objects.filter(
-            is_staff=True,
-            is_active=True,
-            userprofile__is_department_admin=True,
-            userprofile__department=complaint.department,
-        ).first()
-        if dept_admin:
-            return dept_admin
+    if complaint:
+        if complaint.department:
+            profile = UserProfile.objects.filter(
+                department=complaint.department,
+                is_department_admin=True,
+                user__is_active=True,
+            ).select_related('user').first()
+            return profile.user if profile else None
+        return None
 
-    # Fallback: superuser first, then any active staff
-    superadmin = User.objects.filter(
-        is_staff=True, is_active=True, is_superuser=True
-    ).first()
-    if superadmin:
-        return superadmin
-
-    return User.objects.filter(is_staff=True, is_active=True).first()
+    # No complaint at all (general enquiry) — superuser handles these.
+    return User.objects.filter(is_superuser=True, is_active=True).first()
 
 
 @login_required
 def inbox(request):
     """Show all conversations for the current user."""
     user = request.user
-    if user.is_staff:
-        # Staff see ALL conversations
-        conversations = Conversation.objects.select_related(
+
+    if (user.is_superuser or _is_dept_admin(user)):
+        # Staff / department admins see conversations assigned to them
+        conversations = Conversation.objects.filter(
+            participant_staff=user
+        ).select_related(
             'participant_citizen', 'participant_staff', 'complaint'
         ).prefetch_related('messages').order_by('-updated_at')
 
-        # Filter options for staff
         filter_closed = request.GET.get('closed', '')
         if filter_closed == '1':
             conversations = conversations.filter(is_closed=True)
@@ -70,7 +100,6 @@ def inbox(request):
             participant_citizen=user
         ).select_related('participant_staff', 'complaint').prefetch_related('messages').order_by('-updated_at')
 
-    # Attach unread counts
     conv_list = []
     for conv in conversations:
         conv.unread = conv.unread_count_for(user)
@@ -82,7 +111,7 @@ def inbox(request):
     return render(request, 'messaging/inbox.html', {
         'conversations': conv_list,
         'total_unread': total_unread,
-        'is_staff': user.is_staff,
+        'is_staff': (user.is_superuser or _is_dept_admin(user)),
         'filter_closed': request.GET.get('closed', '0'),
         'search': request.GET.get('q', ''),
     })
@@ -94,12 +123,12 @@ def conversation_detail(request, pk):
     user = request.user
     conv = get_object_or_404(Conversation, pk=pk)
 
-    # Access control
-    if not user.is_staff and conv.participant_citizen != user:
-        django_messages.error(request, 'You do not have access to this conversation.')
+    # Access control — either the citizen who started it, or the assigned
+    # department admin/staff member it's routed to
+    if conv.participant_citizen != user and conv.participant_staff != user and not (user.is_superuser or _is_dept_admin(user)):
+        django_messages.error(request, _('You do not have access to this conversation.'))
         return redirect('messaging:inbox')
 
-    # Mark all unread messages as read
     conv.messages.filter(is_read=False).exclude(sender=user).update(is_read=True)
 
     msg_form = MessageForm()
@@ -116,11 +145,11 @@ def conversation_detail(request, pk):
 @login_required
 @require_POST
 def send_message(request, pk):
-    """Send a message in a conversation (AJAX or form POST)."""
+    """Send a message in a conversation (AJAX or form POST). Notifies the other participant."""
     user = request.user
     conv = get_object_or_404(Conversation, pk=pk)
 
-    if not user.is_staff and conv.participant_citizen != user:
+    if conv.participant_citizen != user and conv.participant_staff != user and not (user.is_superuser or _is_dept_admin(user)):
         return JsonResponse({'error': 'Access denied'}, status=403)
 
     if conv.is_closed:
@@ -136,8 +165,16 @@ def send_message(request, pk):
         body=form.cleaned_data['body']
     )
 
-    # Touch conversation updated_at
     conv.save(update_fields=['updated_at'])
+
+    # Notify the other participant (works both directions: citizen -> admin, admin -> citizen)
+    other = conv.get_other_participant(user)
+    _notify(
+        other,
+        title=_('New message from %(sender)s') % {'sender': user.display_name},
+        body=conv.subject,
+        link=reverse('messaging:conversation', kwargs={'pk': conv.pk}),
+    )
 
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     if is_ajax:
@@ -160,7 +197,7 @@ def poll_messages(request, pk):
     user = request.user
     conv = get_object_or_404(Conversation, pk=pk)
 
-    if not user.is_staff and conv.participant_citizen != user:
+    if conv.participant_citizen != user and conv.participant_staff != user and not (user.is_superuser or _is_dept_admin(user)):
         return JsonResponse({'error': 'Access denied'}, status=403)
 
     since_id = request.GET.get('since_id', 0)
@@ -170,8 +207,6 @@ def poll_messages(request, pk):
         since_id = 0
 
     new_messages = conv.messages.filter(pk__gt=since_id).select_related('sender').order_by('created_at')
-
-    # Mark newly fetched messages as read if not from self
     new_messages.exclude(sender=user).update(is_read=True)
 
     return JsonResponse({
@@ -192,19 +227,21 @@ def poll_messages(request, pk):
 
 @login_required
 def start_conversation(request, complaint_pk=None):
-    """Citizen starts a new conversation, optionally linked to a complaint."""
+    """
+    Citizen starts a new conversation, routed to the department admin
+    responsible for the complaint's department (falls back to any staff
+    member for general enquiries or unassigned departments).
+    """
     from complaints.models import Complaint
 
     complaint = None
     if complaint_pk:
         complaint = get_object_or_404(Complaint, pk=complaint_pk)
 
-    # Citizens only — staff use the inbox to initiate
-    if request.user.is_staff:
-        django_messages.info(request, 'Staff can reply from the inbox.')
+    if (request.user.is_superuser or _is_dept_admin(request.user)):
+        django_messages.info(request, _('Staff can reply from the inbox.'))
         return redirect('messaging:inbox')
 
-    # Check if a conversation for this complaint already exists
     if complaint:
         existing = Conversation.objects.filter(
             participant_citizen=request.user,
@@ -214,9 +251,16 @@ def start_conversation(request, complaint_pk=None):
         if existing:
             return redirect('messaging:conversation', pk=existing.pk)
 
-    staff_user = _get_staff_user(complaint)
+    staff_user = _get_department_admin(complaint)
     if not staff_user:
-        django_messages.error(request, 'No staff members are available right now. Please try again later.')
+        if complaint and complaint.department:
+            django_messages.error(
+                request,
+                _('The %(dept)s department does not have an admin assigned yet. Please try again later.')
+                % {'dept': complaint.department.display_name}
+            )
+        else:
+            django_messages.error(request, _('No staff members are available right now. Please try again later.'))
         return redirect('complaints:feed')
 
     if request.method == 'POST':
@@ -230,14 +274,23 @@ def start_conversation(request, complaint_pk=None):
                 participant_citizen=request.user,
                 participant_staff=staff_user,
                 complaint=complaint,
-                subject=subject or 'General Enquiry',
+                subject=subject or _('General Enquiry'),
             )
             Message.objects.create(
                 conversation=conv,
                 sender=request.user,
                 body=form.cleaned_data['body']
             )
-            django_messages.success(request, 'Message sent! You will receive a reply soon.')
+
+            # Notify the department admin (or fallback staff) about the new conversation
+            _notify(
+                staff_user,
+                title=_('New conversation from %(sender)s') % {'sender': request.user.display_name},
+                body=conv.subject,
+                link=reverse('messaging:conversation', kwargs={'pk': conv.pk}),
+            )
+
+            django_messages.success(request, _('Message sent! You will receive a reply soon.'))
             return redirect('messaging:conversation', pk=conv.pk)
     else:
         initial_subject = f'Re: {complaint.title}' if complaint else ''
@@ -253,30 +306,40 @@ def start_conversation(request, complaint_pk=None):
 @login_required
 @require_POST
 def close_conversation(request, pk):
-    """Staff can close a conversation."""
-    if not request.user.is_staff:
-        return JsonResponse({'error': 'Only staff can close conversations.'}, status=403)
-
+    """Department admin / staff can close a conversation."""
     conv = get_object_or_404(Conversation, pk=pk)
+    if not (request.user.is_superuser or _is_dept_admin(request.user)) and conv.participant_staff != request.user:
+        return JsonResponse({'error': 'Only the assigned admin or staff can close conversations.'}, status=403)
     conv.is_closed = True
     conv.save(update_fields=['is_closed', 'updated_at'])
+    django_messages.success(request, _('Conversation closed.'))
 
-    django_messages.success(request, 'Conversation closed.')
+    _notify(
+        conv.participant_citizen,
+        title=_('Conversation closed'),
+        body=conv.subject,
+        link=reverse('messaging:conversation', kwargs={'pk': conv.pk}),
+    )
     return redirect('messaging:inbox')
 
 
 @login_required
 @require_POST
 def reopen_conversation(request, pk):
-    """Staff can reopen a closed conversation."""
-    if not request.user.is_staff:
-        return JsonResponse({'error': 'Only staff can reopen conversations.'}, status=403)
-
+    """Department admin / staff can reopen a closed conversation."""
     conv = get_object_or_404(Conversation, pk=pk)
+    if not (request.user.is_superuser or _is_dept_admin(request.user)) and conv.participant_staff != request.user:
+        return JsonResponse({'error': 'Only the assigned admin or staff can reopen conversations.'}, status=403)
     conv.is_closed = False
     conv.save(update_fields=['is_closed', 'updated_at'])
+    django_messages.success(request, _('Conversation reopened.'))
 
-    django_messages.success(request, 'Conversation reopened.')
+    _notify(
+        conv.participant_citizen,
+        title=_('Conversation reopened'),
+        body=conv.subject,
+        link=reverse('messaging:conversation', kwargs={'pk': conv.pk}),
+    )
     return redirect('messaging:conversation', pk=pk)
 
 
@@ -284,7 +347,7 @@ def reopen_conversation(request, pk):
 def unread_count_api(request):
     """Fast endpoint for navbar badge polling."""
     user = request.user
-    if user.is_staff:
+    if (user.is_superuser or _is_dept_admin(user)):
         count = Message.objects.filter(
             conversation__participant_staff=user,
             is_read=False

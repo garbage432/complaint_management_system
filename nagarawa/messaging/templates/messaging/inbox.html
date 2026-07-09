@@ -4,36 +4,149 @@
 
 {% block extra_head %}
 <style>
-.inbox-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; min-height: 620px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
-.inbox-sidebar { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-.inbox-sidebar-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.inbox-sidebar-title { font-family: var(--font); font-weight: 700; font-size: 1rem; }
-.inbox-search { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
-.inbox-search input { width: 100%; padding: 0.4rem 0.75rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 0.85rem; background: var(--bg); color: var(--text); font-family: var(--font-body); }
-.inbox-search input:focus { outline: none; border-color: var(--brand); }
-.inbox-tabs { display: flex; border-bottom: 1px solid var(--border); }
-.inbox-tab { flex: 1; padding: 0.5rem; text-align: center; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; text-decoration: none; transition: all 0.15s; }
-.inbox-tab:hover { color: var(--text); text-decoration: none; }
-.inbox-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
-.conv-list { flex: 1; overflow-y: auto; }
-.conv-item { display: flex; gap: 0.75rem; padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; text-decoration: none; color: inherit; position: relative; }
-.conv-item:hover { background: var(--surface-2); text-decoration: none; }
-.conv-item.active { background: var(--brand-light); }
-.conv-item.unread { background: var(--surface-2); }
-.conv-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
-.conv-item-body { flex: 1; min-width: 0; }
-.conv-item-name { font-weight: 600; font-size: 0.88rem; color: var(--text); display: flex; align-items: center; gap: 0.4rem; }
-.conv-item-subject { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.conv-item-preview { font-size: 0.78rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.1rem; }
-.conv-item-time { font-size: 0.72rem; color: var(--text-light); white-space: nowrap; }
-.unread-badge { background: var(--brand); color: white; border-radius: 999px; font-size: 0.68rem; font-weight: 700; padding: 0.1rem 0.45rem; min-width: 18px; text-align: center; }
-.inbox-empty { padding: 2.5rem 1rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
-.inbox-empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-.inbox-main { display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-direction: column; gap: 0.5rem; }
-.inbox-main-icon { font-size: 2.5rem; }
-@media (max-width: 700px) { .inbox-layout { grid-template-columns: 1fr; } .inbox-main { display: none; } }
+  .x-global-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  /* Feed Filter Input Component Uniform Custom Modifiers */
+  .x-feed-filter-input {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #cfd9de);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    outline: none;
+    color: var(--text-main);
+  }
+  .x-feed-filter-input:focus {
+    border-color: var(--accent-blue, #1d9bf0);
+  }
+  /* Clean Inline Grid Layout styling for Complaint Post Images Gallery */
+  .x-complaint-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .x-complaint-gallery-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #eff3f4);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .x-complaint-gallery-image:hover {
+    opacity: 0.9;
+  }
 </style>
+
+
+
+<style>
+  /* existing styles unchanged... */
+
+  /* Only the feed list scrolls, filter row stays fixed */
+  .x-feed-stream-container {
+    height: calc(100vh - var(--header-h, 60px) - var(--filter-row-h, 64px));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Right panel scrolls independently, in full */
+  .x-panel-right {
+    height: calc(100vh - var(--header-h, 60px));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .x-feed-stream-container::-webkit-scrollbar,
+  .x-panel-right::-webkit-scrollbar {
+    width: 6px;
+  }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var header = document.querySelector('.x-global-header');
+    var filterRow = document.querySelector('.x-center-filter-row');
+    if (header) {
+      document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+    }
+    if (filterRow) {
+      document.documentElement.style.setProperty('--filter-row-h', filterRow.offsetHeight + 'px');
+    }
+  });
+</script> 
+
+
+
 {% endblock %}
+
+{% block content %}
+<div class="x-workspace-container">
+
+  <!-- PANEL 1: LEFT SIDEBAR NAVIGATION NAVIGATION LINKAGES -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'feed' %}active{% endif %}">
+    <span class="x-v-icon">🏠</span>
+    <span class="x-v-label">{% trans "Feed" %}</span>
+</a>
+
+<a href="{% url 'accounts:notifications' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+    <span class="x-v-icon">🔔</span>
+    <span class="x-v-label">{% trans "Notifications" %}</span>
+</a>
+
+<a href="{% url 'accounts:role_redirect' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <span class="x-v-icon">📊</span>
+    <span class="x-v-label">{% trans "Dashboard" %}</span>
+</a>
+
+<a href="{% url 'complaints:my_complaints' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+    <span class="x-v-icon">📂</span>
+    <span class="x-v-label">{% trans "My Complaints" %}</span>
+</a>
+        
+      </nav>
+      
+      {% if user.is_authenticated %}
+        <div style="padding: 0 12px; margin-top: 16px;">
+          <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration: none; text-align: center; display: block;">
+            + {% trans "File Incident" %}
+          </a>
+        </div>
+      {% endif %} 
+
+      
+        {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
+      </div>
+      {% endif %}
+
+
+    </div>
+  </aside>
 
 {% block content %}
 <div class="container" style="max-width: 1000px;">

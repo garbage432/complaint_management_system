@@ -123,15 +123,15 @@
         
         <div class="x-header-actions-group">
           <!-- Localization Selection Matrix Dropdown Engine -->
-          <form action="{% url 'set_language' %}" method="post" class="lang-switch" id="lang-form-master" style="margin: 0;">
-            {% csrf_token %}
-            <input name="next" type="hidden" value="{{ request.path }}">
-            <input type="hidden" name="language" id="lang-input-master" value="{{ CURRENT_LANGUAGE }}">
-            <div class="x-lang-toggle" style="display: flex; background: var(--bg-subtle, #f7f9fa); padding: 2px; border-radius: 999px; border: 1px solid var(--border-color, #eff3f4);">
-              <button type="button" class="btn-lang {% if CURRENT_LANGUAGE == 'en' %}active{% endif %}" style="border: none; background: transparent; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 999px; cursor: pointer;" onclick="switchLanguage(this, 'en')">EN</button>
-              <button type="button" class="btn-lang {% if CURRENT_LANGUAGE == 'ne' %}active{% endif %}" style="border: none; background: transparent; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 999px; cursor: pointer;" onclick="switchLanguage(this, 'ne')">ने</button>
-            </div>
-          </form>
+          <form action="{% url 'set_language' %}" method="post" class="lang-switch" id="lang-form-auth">
+  {% csrf_token %}
+  <input name="next" type="hidden" id="lang-next-auth" value="{{ request.path }}">
+  <input type="hidden" name="language" id="lang-input-auth" value="{% get_current_language as CURRENT_LANGUAGE %}{{ CURRENT_LANGUAGE }}">
+  <div class="lang-toggle">
+    <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'en' %}active{% endif %}" onclick="switchLanguage(this, 'en')">EN</button>
+    <button type="button" class="lang-option {% if CURRENT_LANGUAGE == 'ne' %}active{% endif %}" onclick="switchLanguage(this, 'ne')">ने</button>
+  </div>
+</form>
 
           {% if user.is_authenticated %}
             <!-- Authenticated Session Control Context Action Element -->

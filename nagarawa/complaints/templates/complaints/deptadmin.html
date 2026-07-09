@@ -56,11 +56,41 @@
           <span class="x-v-icon">🏠</span>
           <span class="x-v-label">{% trans "Feed" %}</span>
         </a>
-        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link active">
-          <span class="x-v-icon">🛠️</span>
-          <span class="x-v-label">{% trans "Department Control" %}</span>
-        </a>
+        
+        
+        <a href="{% url 'accounts:notifications' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+    <span class="x-v-icon">🔔</span>
+    <span class="x-v-label">{% trans "Notifications" %}</span>
+</a>
+
+<a href="{% url 'accounts:role_redirect' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <span class="x-v-icon">📊</span>
+    <span class="x-v-label">{% trans "Dashboard" %}</span>
+</a>
+<a href="{% url 'complaints:my_complaints' %}"
+   class="x-v-link {% if request.resolver_match.url_name == 'my_complaints' %}active{% endif %}">
+    <span class="x-v-icon">📂</span>
+    <span class="x-v-label">{% trans "My Complaints" %}</span>
+</a>
       </nav>
+       {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
+      </div>
+      {% endif %}
     </div>
   </aside>
 
