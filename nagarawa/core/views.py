@@ -13,9 +13,6 @@ User = get_user_model()
 
 
 def home_view(request):
-    if request.user.is_authenticated:
-        return redirect('complaints:feed')
-
     recent = Complaint.objects.select_related('author', 'department').order_by('-created_at')[:6]
 
     stats = {
@@ -27,7 +24,7 @@ def home_view(request):
 
     departments = Department.objects.filter(is_active=True)
 
-    return render(request, 'core/feed.html', {
+    return render(request, 'core/home.html', {
         'recent_complaints': recent,
         'stats': stats,
         'departments': departments,
