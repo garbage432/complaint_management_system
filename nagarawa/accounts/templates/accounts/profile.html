@@ -2,11 +2,10 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{{ target_user.display_name }} (@{{ target_user.username }}){% endblock %}
+{% block title %}{{ profile_user.display_name }} (@{{ profile_user.username }}){% endblock %}
 
 {% block content %}
 <div class="x-workspace-container">
-
   <!-- PANEL 1: LEFT SIDEBAR NAVIGATION -->
   <aside class="x-panel-left">
     <div class="x-sticky-scroll-box">
@@ -21,21 +20,21 @@
 
   <!-- PANEL 2: CENTER TIMELINE PROFILE AREA -->
   <main class="x-panel-center">
-    
+
     <!-- Profile Cover/Header Header Box Layer -->
     <div style="padding: 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 20px; background-color: var(--bg-subtle);">
-      {% if target_user.avatar %}
-        <img src="{{ target_user.avatar.url }}" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" />
+      {% if profile_user.avatar %}
+        <img src="{{ profile_user.avatar.url }}" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05);" />
       {% else %}
-        <span style="width: 80px; height: 80px; border-radius: 50%; background: #ccd6dd; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 2rem; border: 3px solid #fff;">{{ target_user.username|first|upper }}</span>
+        <span style="width: 80px; height: 80px; border-radius: 50%; background: #ccd6dd; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 2rem; border: 3px solid #fff;">{{ profile_user.username|first|upper }}</span>
       {% endif %}
-      
+
       <div style="flex: 1;">
-        <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">{{ target_user.display_name }}</h2>
-        <div style="color: var(--text-muted); font-size: 0.95rem;">@{{ target_user.username }}</div>
+        <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main);">{{ profile_user.display_name }}</h2>
+        <div style="color: var(--text-muted); font-size: 0.95rem;">@{{ profile_user.username }}</div>
       </div>
 
-      {% if user.is_authenticated and user.id == target_user.id %}
+      {% if user.is_authenticated and user.id == profile_user.id %}
         <a href="{% url 'accounts:profile_edit' %}" class="x-pill-action-btn" style="border: 1px solid var(--border-color); padding: 8px 16px; background: #fff; font-weight: 700; color: var(--text-main); text-decoration: none;">
           {% trans "Edit Profile" %}
         </a>
@@ -49,33 +48,54 @@
 
     <div class="x-feed-stream-container">
       {% for complaint in complaints %}
-        <article class="complaint-card" data-complaint="{{ complaint.id }}">
-          <div class="complaint-main">
-            <div class="complaint-card-header">
-              <div class="complaint-meta">
-                <div class="complaint-meta-left" style="gap:0;">
-                  <span class="complaint-author-name" style="margin-right:6px;">{{ target_user.display_name }}</span>
-                  <span class="complaint-timestamp">{{ complaint.created_at|timesince }} ago</span>
-                </div>
-                <span class="status-badge" style="background:#eff3f4; color:var(--text-muted);">{{ complaint.get_status_display }}</span>
-              </div>
-            </div>
-            
-            <div class="complaint-body">
-              <h3 class="complaint-title"><a href="{% url 'complaints:detail' complaint.id %}">{{ complaint.title }}</a></h3>
-              <p class="complaint-desc">{{ complaint.description|truncatewords:30 }}</p>
-              <div class="complaint-location">📍 {{ complaint.location_name }}</div>
-            </div>
+        <div style="padding: 16px; border-bottom: 1px solid var(--border-color); background: #fff; display: flex; flex-direction: column; gap: 12px;" data-complaint="{{ complaint.id }}">
 
-            <div class="complaint-footer">
-              <div class="x-pill-vote-box">
-                <button class="x-pill-vote-arrow up" onclick="handleVote('{{ complaint.id }}', 'up')">▲</button>
-                <span class="x-pill-vote-counter">{{ complaint.score }}</span>
-                <button class="x-pill-vote-arrow down" onclick="handleVote('{{ complaint.id }}', 'down')">▼</button>
+          <!-- Header row: avatar, name, timestamp, status -->
+          <div style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
+            {% if profile_user.avatar %}
+              <img src="{{ profile_user.avatar.url }}" style="min-width: 40px; width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />
+            {% else %}
+              <span class="complaint-author-avatar" style="min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg-subtle); font-weight: 700;">
+                {{ profile_user.username|first|upper }}
+              </span>
+            {% endif %}
+
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px;">
+                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);">{{ profile_user.display_name }}</span>
+                <span class="status-badge status-{{ complaint.status }}" style="font-size: 0.75rem;">{{ complaint.get_status_display }}</span>
               </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">{{ complaint.created_at|timesince }} {% trans "ago" %}</div>
             </div>
           </div>
-        </article>
+
+          <!-- Title, description, location -->
+          <div style="padding-left: 52px;">
+            <h3 style="font-size: 1.05rem; font-weight: 800; margin: 0 0 6px 0; color: var(--text-main);">
+              <a href="{% url 'complaints:detail' complaint.id %}" style="color: inherit; text-decoration: none;">{{ complaint.title }}</a>
+            </h3>
+            <p style="font-size: 0.9rem; color: var(--text-main); margin: 0; line-height: 1.45;">{{ complaint.description|truncatewords:30 }}</p>
+
+            {% if complaint.location_name %}
+              <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 4px;">
+                📍 {{ complaint.location_name }}
+              </div>
+            {% endif %}
+
+            <!-- Vote footer -->
+            <div style="display: flex; align-items: center; gap: 20px; margin-top: 14px; padding-top: 4px; font-size: 0.85rem; color: var(--text-muted);">
+              <div class="vote-group">
+                <button class="x-pill-vote-arrow up" onclick="handleVote('{{ complaint.id }}', 'up')" title="{% trans 'Upvote' %}">▲</button>
+                <span class="x-pill-vote-counter">{{ complaint.score }}</span>
+                <button class="x-pill-vote-arrow down" onclick="handleVote('{{ complaint.id }}', 'down')" title="{% trans 'Downvote' %}">▼</button>
+              </div>
+
+              <a href="{% url 'complaints:detail' complaint.id %}" class="x-pill-action-btn" style="text-decoration: none; font-size: 0.78rem; font-weight: 700; border: 1px solid var(--border-color); color: var(--text-main); background: #fff; padding: 4px 12px; margin-left: auto; border-radius: 14px;">
+                {% trans "View Thread" %}
+              </a>
+            </div>
+          </div>
+        </div>
       {% empty %}
         <div style="padding: 48px 16px; text-align: center; color: var(--text-muted); font-size: 0.95rem;">
           {% trans "No civil complaints have been published by this account context yet." %}

@@ -58,10 +58,15 @@ function toggleReply(commentId) {
 }
 
 /**
- * System alerts auto-dismiss with an added smooth visual fade-out
+ * System alerts auto-dismiss with an added smooth visual fade-out.
+ * Error messages are excluded — they stay on screen until the user
+ * dismisses them manually, since they usually explain why an action
+ * (like starting a conversation) silently failed.
  */
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.message').forEach(el => {
+    if (el.classList.contains('message-error')) return;
+
     setTimeout(() => {
       el.style.opacity = '0';
       el.style.transition = 'opacity 0.3s ease';
