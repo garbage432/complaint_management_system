@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from departments.models import Department
 
 
@@ -12,11 +13,11 @@ class Complaint(models.Model):
     STATUS_REJECTED = 'rejected'
 
     STATUS_CHOICES = [
-        (STATUS_PENDING, 'Pending'),
-        (STATUS_VERIFIED, 'Verified'),
-        (STATUS_IN_PROGRESS, 'In Progress'),
-        (STATUS_SOLVED, 'Solved'),
-        (STATUS_REJECTED, 'Rejected'),
+        (STATUS_PENDING, _('Pending')),
+        (STATUS_VERIFIED, _('Verified')),
+        (STATUS_IN_PROGRESS, _('In Progress')),
+        (STATUS_SOLVED, _('Solved')),
+        (STATUS_REJECTED, _('Rejected')),
     ]
 
     STATUS_COLORS = {
@@ -27,12 +28,11 @@ class Complaint(models.Model):
         STATUS_REJECTED: '#EF4444',
     }
     PRIORITY_CHOICES = [
-    ('low', 'Low'),
-    ('medium', 'Medium'),
-    ('high', 'High'),
-    ('urgent', 'Urgent'),
-]
-
+        ('low', _('Low')),
+        ('medium', _('Medium')),
+        ('high', _('High')),
+        ('urgent', _('Urgent')),
+    ]
 
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     due_date = models.DateField(null=True, blank=True)

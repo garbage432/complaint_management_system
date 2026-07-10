@@ -2,25 +2,27 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import RegisterForm, LoginForm, ProfileEditForm
-from .models import User
-from complaints.models import Complaint
-from departments.models import UserProfile
 from django.db import models
-
-import csv
+from django.db.models import Sum, Count, Avg
+from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
 from django.conf import settings
-from django.db.models import Count, Avg
-from django.utils import timezone
+from datetime import timedelta
+import csv
+from django.utils.translation import gettext_lazy as _
+
+from .forms import RegisterForm, LoginForm, ProfileEditForm
+from .models import User
 from complaints.models import (
     Complaint, StatusLog, InternalNote,
     ComplaintAssignment, ComplaintRating, Notification
 )
 from departments.models import Department, UserProfile
 
+
+# ── auth ─────────────────────────────────────────────────────────────────
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -37,42 +39,43 @@ def register_view(request):
     return render(request, 'accounts/register.html', {'form': form})
 
 
-
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('accounts:role_redirect')
-
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
-
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-
-            # ensure profile exists
             profile, created = UserProfile.objects.get_or_create(user=user)
-
-            # ROLE ROUTING
             if user.is_superuser:
                 return redirect('accounts:superadmin_dashboard')
-
             if profile.is_department_admin:
                 return redirect('accounts:deptadmin_dashboard')
-
             return redirect('accounts:user_dashboard')
-
         messages.error(request, "Invalid username or password.")
-
     else:
         form = LoginForm()
-
     return render(request, 'accounts/login.html', {'form': form})
+
+
 @login_required
 def logout_view(request):
     logout(request)
     return redirect('core:feed')
 
 
+@login_required
+def role_redirect(request):
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    if request.user.is_superuser:
+        return redirect('accounts:superadmin_dashboard')
+    if profile.is_department_admin:
+        return redirect('accounts:deptadmin_dashboard')
+    return redirect('accounts:user_dashboard')
+
+
+# ── profile ───────────────────────────────────────────────────────────────
 
 def profile_view(request, username):
     profile_user = get_object_or_404(User, username=username)
@@ -95,7 +98,81 @@ def profile_edit_view(request):
         form = ProfileEditForm(instance=request.user)
     return render(request, 'accounts/profile_edit.html', {'form': form})
 
-from departments.models import Department
+
+# ── user dashboard ────────────────────────────────────────────────────────
+
+@login_required
+def user_dashboard(request):
+    complaints = Complaint.objects.filter(author=request.user).order_by('-created_at')
+    total_complaints = complaints.count()
+
+    # Profile completion — fields that exist on your User model
+    user = request.user
+    fields = [user.avatar, user.bio, user.email, user.phone, user.district]
+    profile_completion = int((sum(bool(f) for f in fields) / len(fields)) * 100)
+
+    # Heatmap — complaints per month for last 12 months
+    now = timezone.now()
+    heatmap_data = []
+    heatmap_months = []
+    for i in range(11, -1, -1):
+        month_start = (now.replace(day=1) - timedelta(days=30 * i))
+        month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
+        count = complaints.filter(created_at__gte=month_start, created_at__lt=month_end).count()
+        heatmap_data.append(min(count, 4))
+        heatmap_months.append(month_start.strftime('%b')[0])
+
+    # Engagement stats — upvote_count and comment_count are @property,
+    # so we compute totals in Python, not via aggregate()
+    total_upvotes = sum(c.upvote_count for c in complaints)
+    total_comments = sum(c.comment_count for c in complaints)
+    total_views = complaints.aggregate(total=Sum('view_count'))['total'] or 0
+    avg_engagement = round(
+        (total_upvotes + total_comments) / total_complaints, 1
+    ) if total_complaints else 0
+
+    engagement_stats = [
+        {'label': _('Total upvotes received'), 'value': total_upvotes},
+        {'label': _('Total comments received'), 'value': total_comments},
+        {'label': _('Total views'), 'value': total_views},
+        {'label': _('Avg. engagement / complaint'), 'value': avg_engagement},
+    ]
+
+    # Most active complaint — sort in Python since upvote_count is a @property
+    top_complaint = max(
+        complaints,
+        key=lambda c: (c.upvote_count + c.comment_count + c.view_count),
+        default=None
+    )
+
+    # Recent notifications
+    recent_notifications = Notification.objects.filter(
+        recipient=request.user
+    ).order_by('-created_at')[:4]
+
+    # Department filter
+    selected_dept = request.GET.get('dept')
+    departments = Department.objects.all()
+
+    context = {
+        'complaints': complaints,
+        'recent_complaints': complaints[:5],
+        'total_count': total_complaints,
+        'pending_count': complaints.filter(status='pending').count(),
+        'in_progress_count': complaints.filter(status='in_progress').count(),
+        'resolved_count': complaints.filter(status='solved').count(),
+        'profile_completion': profile_completion,
+        'heatmap_data': heatmap_data,
+        'heatmap_months': heatmap_months,
+        'engagement_stats': engagement_stats,
+        'top_complaint': top_complaint,
+        'recent_notifications': recent_notifications,
+        'departments': departments,
+        'selected_dept': selected_dept,
+    }
+    return render(request, 'accounts/user_dashboard.html', context)
+
+# ── superadmin dashboard ──────────────────────────────────────────────────
 
 @login_required
 def superadmin_dashboard(request):
@@ -105,7 +182,6 @@ def superadmin_dashboard(request):
     if selected_dept:
         complaints = complaints.filter(department_id=selected_dept)
 
-    # complaint IDs that have unread messages
     complaints_with_messages = set(
         Conversation.objects.filter(is_closed=False)
         .exclude(complaint=None)
@@ -116,102 +192,15 @@ def superadmin_dashboard(request):
         "departments": Department.objects.all(),
         "selected_dept": selected_dept,
         "complaints_with_messages": complaints_with_messages,
-        "total":            Complaint.objects.count(),
-        "pending_count":    Complaint.objects.filter(status='pending').count(),
-        "in_progress_count":Complaint.objects.filter(status='in_progress').count(),
-        "resolved_count":   Complaint.objects.filter(status='resolved').count(),
-        "rejected_count":   Complaint.objects.filter(status='rejected').count(),
+        "total":             Complaint.objects.count(),
+        "pending_count":     Complaint.objects.filter(status='pending').count(),
+        "in_progress_count": Complaint.objects.filter(status='in_progress').count(),
+        "resolved_count":    Complaint.objects.filter(status='resolved').count(),
+        "rejected_count":    Complaint.objects.filter(status='rejected').count(),
     })
 
-@login_required
-def deptadmin_dashboard(request):
-    profile = request.user.userprofile
-    complaints = Complaint.objects.filter(department=profile.department).select_related('author')
-    selected_status = request.GET.get('status')
-    if selected_status:
-        complaints = complaints.filter(status=selected_status)
 
-    base = Complaint.objects.filter(department=profile.department)
-    return render(request, "complaints/deptadmin.html", {
-        "complaints": complaints.order_by('-created_at'),
-        "department": profile.department,
-        "selected_status": selected_status,
-        "total":            base.count(),
-        "pending_count":    base.filter(status='pending').count(),
-        "in_progress_count":base.filter(status='in_progress').count(),
-        "resolved_count":   base.filter(status='resolved').count(),
-    })
-from departments.models import Department
-
-@login_required
-def user_dashboard(request):
-    complaints = Complaint.objects.filter(author=request.user).select_related('department')
-
-    selected_dept = request.GET.get('dept')
-    if selected_dept:
-        complaints = complaints.filter(department_id=selected_dept)
-
-    return render(request, "complaints/user.html", {
-        "complaints": complaints.order_by('-created_at'),
-        "departments": Department.objects.all(),
-        "selected_dept": selected_dept,
-        "pending_count":     Complaint.objects.filter(author=request.user, status='pending').count(),
-        "in_progress_count": Complaint.objects.filter(author=request.user, status='in_progress').count(),
-        "resolved_count":    Complaint.objects.filter(author=request.user, status='resolved').count(),
-    })
-@login_required
-def role_redirect(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
-    if request.user.is_superuser:
-        return redirect("accounts:superadmin_dashboard")  # ← add accounts:
-
-    if profile.is_department_admin:
-        return redirect("accounts:deptadmin_dashboard")   # ← add accounts:
-
-    return redirect("accounts:user_dashboard")     
-
-from django.views.decorators.http import require_POST
-
-@login_required
-@require_POST
-def update_status(request, pk):
-    complaint = get_object_or_404(Complaint, pk=pk)
-
-    # only the dept admin of that complaint's department can update
-    profile = request.user.userprofile
-    if not (request.user.is_superuser or profile.department == complaint.department):
-        messages.error(request, "You don't have permission to update this complaint.")
-        return redirect('accounts:deptadmin_dashboard')
-
-    new_status = request.POST.get('status')
-    note = request.POST.get('note', '').strip()
-
-    valid = ['pending', 'verified', 'in_progress', 'solved', 'rejected']
-    if new_status not in valid:
-        messages.error(request, "Invalid status.")
-        return redirect('accounts:deptadmin_dashboard')
-
-    old_status = complaint.status
-    complaint.status = new_status
-    complaint.save()
-
-    # log the change
-    if old_status != new_status:
-        from complaints.models import StatusLog
-        StatusLog.objects.create(
-            complaint=complaint,
-            changed_by=request.user,
-            old_status=old_status,
-            new_status=new_status,
-            note=note or f"Status changed to {new_status}."
-        )
-        messages.success(request, f"Complaint marked as {new_status}.")
-    else:
-        messages.info(request, "Status unchanged.")
-
-    return redirect('accounts:deptadmin_dashboard')
-
+# ── dept admin dashboard ──────────────────────────────────────────────────
 
 @login_required
 def deptadmin_dashboard(request):
@@ -225,15 +214,16 @@ def deptadmin_dashboard(request):
         "complaints": complaints.order_by('-created_at').prefetch_related('status_logs'),
         "department": profile.department,
         "selected_status": selected_status,
-        "total":            base.count(),
-        "pending_count":    base.filter(status='pending').count(),
-        "verified_count":   base.filter(status='verified').count(),
-        "in_progress_count":base.filter(status='in_progress').count(),
-        "solved_count":     base.filter(status='solved').count(),
-        "rejected_count":   base.filter(status='rejected').count(),
-    })    
+        "total":             base.count(),
+        "pending_count":     base.filter(status='pending').count(),
+        "verified_count":    base.filter(status='verified').count(),
+        "in_progress_count": base.filter(status='in_progress').count(),
+        "solved_count":      base.filter(status='solved').count(),
+        "rejected_count":    base.filter(status='rejected').count(),
+    })
 
-# ── helpers ──────────────────────────────────────────────────────────────
+
+# ── helpers ───────────────────────────────────────────────────────────────
 
 def _is_dept_admin(user):
     try:
@@ -243,7 +233,6 @@ def _is_dept_admin(user):
 
 
 def _send_notification(recipient, title, body, link=''):
-    """Create an in-app notification and send an email."""
     Notification.objects.create(
         recipient=recipient, title=title, body=body, link=link
     )
@@ -257,13 +246,13 @@ def _send_notification(recipient, title, body, link=''):
         )
 
 
-# ── dept admin: update status ────────────────────────────────────────────
+# ── update status ─────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def update_status(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
 
     if not (request.user.is_superuser or profile.department == complaint.department):
         messages.error(request, "Permission denied.")
@@ -290,11 +279,10 @@ def update_status(request, pk):
             note=note or f"Status updated to {new_status}.",
         )
 
-        # notify the author
         if not complaint.is_anonymous:
             _send_notification(
                 recipient=complaint.author,
-                title=f"Your complaint status changed to '{new_status}'",
+                title=_("Your complaint status changed to '%(status)s'") % {'status': new_status},
                 body=(
                     f"Hi {complaint.author.display_name},\n\n"
                     f"Your complaint '{complaint.title}' has been updated to '{new_status}'.\n"
@@ -311,35 +299,30 @@ def update_status(request, pk):
     return redirect('accounts:deptadmin_dashboard')
 
 
-# ── dept admin: internal note ────────────────────────────────────────────
+# ── internal note ─────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def add_internal_note(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
     body = request.POST.get('body', '').strip()
-
     if not body:
         messages.error(request, "Note cannot be empty.")
         return redirect('accounts:deptadmin_dashboard')
-
     InternalNote.objects.create(complaint=complaint, author=request.user, body=body)
     messages.success(request, "Internal note added.")
     return redirect('accounts:deptadmin_dashboard')
 
 
-# ── dept admin: assign staff ─────────────────────────────────────────────
+# ── assign complaint ──────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def assign_complaint(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
     staff_id = request.POST.get('staff_id')
     note = request.POST.get('note', '').strip()
-
-    from accounts.models import User as AuthUser
-    staff = get_object_or_404(AuthUser, pk=staff_id)
+    staff = get_object_or_404(User, pk=staff_id)
 
     ComplaintAssignment.objects.update_or_create(
         complaint=complaint,
@@ -348,7 +331,7 @@ def assign_complaint(request, pk):
 
     _send_notification(
         recipient=staff,
-        title=f"Complaint assigned to you",
+        title="Complaint assigned to you",
         body=(
             f"Hi {staff.display_name},\n\n"
             f"The complaint '{complaint.title}' has been assigned to you.\n"
@@ -362,13 +345,12 @@ def assign_complaint(request, pk):
     return redirect('accounts:deptadmin_dashboard')
 
 
-# ── dept admin: notify author ────────────────────────────────────────────
+# ── notify author ─────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def notify_author(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
-
     if complaint.is_anonymous:
         messages.error(request, "Cannot notify an anonymous author.")
         return redirect('accounts:deptadmin_dashboard')
@@ -394,81 +376,67 @@ def notify_author(request, pk):
     return redirect('accounts:deptadmin_dashboard')
 
 
-# ── dept admin: set priority ─────────────────────────────────────────────
+# ── set priority ──────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def set_priority(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
     priority = request.POST.get('priority')
-
     if priority not in ['low', 'medium', 'high', 'urgent']:
         messages.error(request, "Invalid priority.")
         return redirect('accounts:deptadmin_dashboard')
-
     complaint.priority = priority
     complaint.save()
     messages.success(request, f"Priority set to '{priority}'.")
     return redirect('accounts:deptadmin_dashboard')
 
 
-# ── dept admin: export CSV ───────────────────────────────────────────────
+# ── export CSV ────────────────────────────────────────────────────────────
 
 @login_required
 def export_csv(request):
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
-
     if request.user.is_superuser:
         complaints = Complaint.objects.all().select_related('department', 'author')
     elif profile.is_department_admin:
-        complaints = Complaint.objects.filter(
-            department=profile.department
-        ).select_related('department', 'author')
+        complaints = Complaint.objects.filter(department=profile.department).select_related('department', 'author')
     else:
         messages.error(request, "Permission denied.")
         return redirect('accounts:user_dashboard')
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="complaints.csv"'
-
     writer = csv.writer(response)
     writer.writerow(['ID', 'Title', 'Department', 'Author', 'Status', 'Priority', 'Created', 'Due Date', 'Views', 'Vote Score'])
-
     for c in complaints:
         writer.writerow([
-            c.id,
-            c.title,
+            c.id, c.title,
             c.department.name if c.department else '',
             'Anonymous' if c.is_anonymous else c.author.display_name,
-            c.status,
-            c.priority,
+            c.status, c.priority,
             c.created_at.strftime('%Y-%m-%d'),
             c.due_date or '',
-            c.view_count,
-            c.vote_score,
+            c.view_count, c.vote_score,
         ])
-
     return response
 
 
-# ── citizen: rate complaint ──────────────────────────────────────────────
+# ── rate complaint ────────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def rate_complaint(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
-
     if complaint.author != request.user:
         messages.error(request, "You can only rate your own complaints.")
         return redirect(complaint.get_absolute_url())
-
     if complaint.status != 'solved':
         messages.error(request, "You can only rate solved complaints.")
         return redirect(complaint.get_absolute_url())
 
     stars = int(request.POST.get('stars', 0))
     feedback = request.POST.get('feedback', '').strip()
-
     if not 1 <= stars <= 5:
         messages.error(request, "Rating must be between 1 and 5.")
         return redirect(complaint.get_absolute_url())
@@ -477,38 +445,31 @@ def rate_complaint(request, pk):
         complaint=complaint,
         defaults={'author': request.user, 'stars': stars, 'feedback': feedback}
     )
-
     messages.success(request, "Thank you for your rating!")
     return redirect(complaint.get_absolute_url())
 
 
-# ── citizen: withdraw complaint ──────────────────────────────────────────
+# ── withdraw complaint ────────────────────────────────────────────────────
 
 @login_required
 @require_POST
 def withdraw_complaint(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk, author=request.user)
-
     if complaint.status != 'pending':
         messages.error(request, "Only pending complaints can be withdrawn.")
         return redirect(complaint.get_absolute_url())
-
     complaint.delete()
     messages.success(request, "Complaint withdrawn successfully.")
     return redirect('accounts:user_dashboard')
 
 
-# ── notifications ────────────────────────────────────────────────────────
+# ── notifications ─────────────────────────────────────────────────────────
 
 @login_required
 def notifications_view(request):
-    # mark as read first
     request.user.notifications.filter(is_read=False).update(is_read=True)
-    # then fetch all (now all are read)
     notifications = request.user.notifications.all()
-    return render(request, 'accounts/notifications.html', {
-        'notifications': notifications,
-    })
+    return render(request, 'accounts/notifications.html', {'notifications': notifications})
 
 
 @login_required
@@ -521,14 +482,13 @@ def mark_notification_read(request, pk):
     return redirect('accounts:notifications')
 
 
-# ── public stats ─────────────────────────────────────────────────────────
+# ── public stats ──────────────────────────────────────────────────────────
 
 def public_stats(request):
     departments = Department.objects.annotate(
         total=Count('complaints'),
         solved=Count('complaints', filter=models.Q(complaints__status='solved')),
     )
-
     total       = Complaint.objects.count()
     solved      = Complaint.objects.filter(status='solved').count()
     pending     = Complaint.objects.filter(status='pending').count()
@@ -543,4 +503,4 @@ def public_stats(request):
         'in_progress':  in_progress,
         'avg_rating':   round(avg_rating, 1),
         'solve_rate':   round((solved / total * 100) if total else 0, 1),
-    })   # ← add accounts:
+    })

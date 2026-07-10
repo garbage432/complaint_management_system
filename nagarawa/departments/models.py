@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.translation import get_language
 
 
 class Department(models.Model):
@@ -7,6 +8,12 @@ class Department(models.Model):
     name = models.CharField(
         max_length=100,
         unique=True
+    )
+
+    name_ne = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Nepali name of the department (optional)'
     )
 
     slug = models.SlugField(
@@ -44,6 +51,16 @@ class Department(models.Model):
         return self.name
 
     @property
+    def display_name(self):
+        """
+        Returns the Nepali name if the current active language is Nepali
+        and a Nepali name has been set; otherwise falls back to English.
+        """
+        if get_language() == 'ne' and self.name_ne:
+            return self.name_ne
+        return self.name
+
+    @property
     def complaint_count(self):
         """
         Returns number of complaints
@@ -78,6 +95,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
     @property
     def role(self):
        if self.user.is_superuser:

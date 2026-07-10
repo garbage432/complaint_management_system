@@ -1,0 +1,520 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-04 00:00+0545\n"
+"PO-Revision-Date: 2026-07-04 00:00+0545\n"
+"Last-Translator: Samparka Team\n"
+"Language-Team: Nepali\n"
+"Language: ne\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Civic Complaint Platform"
+msgstr "नागरिक उजुरी प्लेटफर्म"
+
+msgid "Nepal Emblem"
+msgstr "नेपालको राष्ट्रिय चिन्ह"
+
+msgid "Samparka"
+msgstr "सम्पर्क"
+
+msgid "Feed"
+msgstr "फिड"
+
+msgid "My Complaints"
+msgstr "मेरा उजुरीहरू"
+
+msgid "Dashboard"
+msgstr "ड्यासबोर्ड"
+
+msgid "Post Complaint"
+msgstr "उजुरी पेश गर्नुहोस्"
+
+msgid "Profile"
+msgstr "प्रोफाइल"
+
+msgid "Edit Profile"
+msgstr "प्रोफाइल सम्पादन गर्नुहोस्"
+
+msgid "Admin Panel"
+msgstr "एडमिन प्यानल"
+
+msgid "Logout"
+msgstr "लगआउट"
+
+msgid "Login"
+msgstr "लगइन"
+
+msgid "Sign Up"
+msgstr "साइन अप"
+
+msgid "Powered by citizens, for citizens."
+msgstr "नागरिकद्वारा, नागरिकका लागि सञ्चालित।"
+
+msgid "Search complaints..."
+msgstr "उजुरी खोज्नुहोस्..."
+
+msgid "Filter"
+msgstr "फिल्टर"
+
+msgid "Clear"
+msgstr "खाली गर्नुहोस्"
+
+msgid "Share a complaint or issue..."
+msgstr "उजुरी वा समस्या साझा गर्नुहोस्..."
+
+msgid "Post"
+msgstr "पोस्ट गर्नुहोस्"
+
+msgid "Anonymous"
+msgstr "अज्ञात"
+
+msgid "Complaint image"
+msgstr "उजुरीको तस्बिर"
+
+msgid "Upvote"
+msgstr "समर्थन गर्नुहोस्"
+
+msgid "Downvote"
+msgstr "विरोध गर्नुहोस्"
+
+msgid "View"
+msgstr "हेर्नुहोस्"
+
+msgid "No complaints found."
+msgstr "कुनै उजुरी फेला परेन।"
+
+msgid "Be the first to post one."
+msgstr "पहिलो पोस्ट गर्ने बन्नुहोस्।"
+
+msgid "Prev"
+msgstr "अघिल्लो"
+
+msgid "Next"
+msgstr "अर्को"
+
+msgid "Departments"
+msgstr "विभागहरू"
+
+msgid "Quick Actions"
+msgstr "छिटो कार्यहरू"
+
+msgid "You can upload multiple images (max 5MB each)"
+msgstr "तपाईं धेरै तस्बिरहरू अपलोड गर्न सक्नुहुन्छ (प्रत्येक अधिकतम ५ एमबी)"
+
+msgid "Brief title of your complaint"
+msgstr "तपाईंको उजुरीको संक्षिप्त शीर्षक"
+
+msgid "Describe the issue in detail..."
+msgstr "समस्यालाई विस्तारमा वर्णन गर्नुहोस्..."
+
+msgid "Location name (e.g. New Baneshwor, Kathmandu)"
+msgstr "स्थानको नाम (जस्तै नयाँ बानेश्वर, काठमाडौं)"
+
+msgid "Select a department..."
+msgstr "विभाग छान्नुहोस्..."
+
+msgid "All Departments"
+msgstr "सबै विभागहरू"
+
+msgid "All Status"
+msgstr "सबै स्थिति"
+
+msgid "Newest"
+msgstr "नयाँ"
+
+msgid "Oldest"
+msgstr "पुरानो"
+
+msgid "Most Viewed"
+msgstr "धेरै हेरिएको"
+
+msgid "Pending"
+msgstr "विचाराधीन"
+
+msgid "Verified"
+msgstr "प्रमाणित"
+
+msgid "In Progress"
+msgstr "प्रगतिमा"
+
+msgid "Solved"
+msgstr "समाधान भयो"
+
+msgid "Rejected"
+msgstr "अस्वीकृत"
+
+msgid "Low"
+msgstr "न्यून"
+
+msgid "Medium"
+msgstr "मध्यम"
+
+msgid "High"
+msgstr "उच्च"
+
+msgid "Urgent"
+msgstr "अत्यावश्यक"
+
+msgid "Welcome back, %(user_display_name)s"
+msgstr "फिर्ता स्वागत छ, %(user_display_name)s"
+
+msgid "Here's your complaint activity"
+msgstr "तपाईंको उजुरी सम्बन्धी गतिविधि"
+
+msgid "New Complaint"
+msgstr "नयाँ उजुरी"
+
+msgid "Total"
+msgstr "जम्मा"
+
+msgid "Resolved"
+msgstr "समाधान भयो"
+
+msgid "Submit Complaint"
+msgstr "उजुरी पेश गर्नुहोस्"
+
+msgid "Report a new issue"
+msgstr "नयाँ समस्या रिपोर्ट गर्नुहोस्"
+
+msgid "Track Status"
+msgstr "स्थिति ट्र्याक गर्नुहोस्"
+
+msgid "Check your complaints"
+msgstr "तपाईंको उजुरीहरू जाँच गर्नुहोस्"
+
+msgid "View Feed"
+msgstr "फिड हेर्नुहोस्"
+
+msgid "Browse public complaints"
+msgstr "सार्वजनिक उजुरीहरू ब्राउज गर्नुहोस्"
+
+msgid "Profile Completion"
+msgstr "प्रोफाइल पूर्णता"
+
+msgid "Your profile is %(profile_completion)s%% complete"
+msgstr "तपाईंको प्रोफाइल %(profile_completion)s%% पूरा भएको छ"
+
+msgid "Avatar uploaded"
+msgstr "अवतार अपलोड भयो"
+
+msgid "Add avatar"
+msgstr "अवतार थप्नुहोस्"
+
+msgid "Bio added"
+msgstr "परिचय थपियो"
+
+msgid "Add bio"
+msgstr "परिचय थप्नुहोस्"
+
+msgid "Email set"
+msgstr "इमेल सेट भयो"
+
+msgid "Add email"
+msgstr "इमेल थप्नुहोस्"
+
+msgid "Phone number"
+msgstr "फोन नम्बर"
+
+msgid "Add phone"
+msgstr "फोन नम्बर थप्नुहोस्"
+
+msgid "Location set"
+msgstr "स्थान सेट भयो"
+
+msgid "Set location"
+msgstr "स्थान सेट गर्नुहोस्"
+
+msgid "Activity — Last 12 Months"
+msgstr "गतिविधि — पछिल्लो १२ महिना"
+
+msgid "Less"
+msgstr "कम"
+
+msgid "More"
+msgstr "बढी"
+
+msgid "Notifications"
+msgstr "सूचना"
+
+msgid "No notifications yet."
+msgstr "अहिलेसम्म कुनै सूचना छैन।"
+
+msgid "View all"
+msgstr "सबै हेर्नुहोस्"
+
+msgid "Engagement Stats"
+msgstr "सहभागिता तथ्याङ्क"
+
+msgid "Most Active Complaint"
+msgstr "सबैभन्दा सक्रिय उजुरी"
+
+msgid "Upvotes"
+msgstr "समर्थनहरू"
+
+msgid "Comments"
+msgstr "टिप्पणीहरू"
+
+msgid "Views"
+msgstr "हेराइहरू"
+
+msgid "No complaints yet."
+msgstr "अहिलेसम्म कुनै उजुरी छैन।"
+
+msgid "Status Timeline"
+msgstr "स्थिति समयरेखा"
+
+msgid "Recent Complaints"
+msgstr "भर्खरका उजुरीहरू"
+
+msgid "Post your first one."
+msgstr "आफ्नो पहिलो पोस्ट गर्नुहोस्।"
+
+msgid "Edit"
+msgstr "सम्पादन गर्नुहोस्"
+
+msgid "Filter by Department"
+msgstr "विभाग अनुसार फिल्टर गर्नुहोस्"
+
+msgid "All"
+msgstr "सबै"
+
+msgid "Total upvotes received"
+msgstr "प्राप्त कुल समर्थनहरू"
+
+msgid "Total comments received"
+msgstr "प्राप्त कुल टिप्पणीहरू"
+
+msgid "Total views"
+msgstr "कुल हेराइहरू"
+
+msgid "Avg. engagement / complaint"
+msgstr "औसत सहभागिता / उजुरी"
+
+msgid "District set"
+msgstr "जिल्ला सेट भयो"
+
+msgid "Add district"
+msgstr "जिल्ला थप्नुहोस्"
+
+msgid "Welcome, %(name)s! Your account has been created."
+msgstr "स्वागत छ, %(name)s! तपाईंको खाता सिर्जना भएको छ।"
+
+msgid "Invalid username or password."
+msgstr "अमान्य प्रयोगकर्ता नाम वा पासवर्ड।"
+
+msgid "Profile updated successfully."
+msgstr "प्रोफाइल सफलतापूर्वक अद्यावधिक भयो।"
+
+msgid "Permission denied."
+msgstr "अनुमति अस्वीकृत।"
+
+msgid "Invalid status."
+msgstr "अमान्य स्थिति।"
+
+msgid "Status updated to %(status)s."
+msgstr "स्थिति %(status)s मा अद्यावधिक भयो।"
+
+msgid "Your complaint status changed to '%(status)s'"
+msgstr "तपाईंको उजुरीको स्थिति '%(status)s' मा परिवर्तन भयो"
+
+msgid ""
+"Hi %(name)s,\n"
+"\n"
+"Your complaint '%(title)s' has been updated to '%(status)s'.\n"
+"Note: %(note)s\n"
+"\n"
+"View it at: http://localhost:8000%(url)s"
+msgstr ""
+"नमस्ते %(name)s,\n"
+"\n"
+"तपाईंको उजुरी '%(title)s' लाई '%(status)s' मा अद्यावधिक गरिएको छ।\n"
+"नोट: %(note)s\n"
+"\n"
+"यहाँ हेर्नुहोस्: http://localhost:8000%(url)s"
+
+msgid "No additional note."
+msgstr "थप नोट छैन।"
+
+msgid "Status unchanged."
+msgstr "स्थिति परिवर्तन भएन।"
+
+msgid "Note cannot be empty."
+msgstr "नोट खाली हुन सक्दैन।"
+
+msgid "Internal note added."
+msgstr "आन्तरिक नोट थपियो।"
+
+msgid "Complaint assigned to you"
+msgstr "उजुरी तपाईंलाई तोकिएको छ"
+
+msgid ""
+"Hi %(name)s,\n"
+"\n"
+"The complaint '%(title)s' has been assigned to you.\n"
+"Note: %(note)s\n"
+"\n"
+"View it at: http://localhost:8000%(url)s"
+msgstr ""
+"नमस्ते %(name)s,\n"
+"\n"
+"उजुरी '%(title)s' तपाईंलाई तोकिएको छ।\n"
+"नोट: %(note)s\n"
+"\n"
+"यहाँ हेर्नुहोस्: http://localhost:8000%(url)s"
+
+msgid "Complaint assigned to %(name)s."
+msgstr "उजुरी %(name)s लाई तोकियो।"
+
+msgid "Cannot notify an anonymous author."
+msgstr "अज्ञान लेखकलाई सूचित गर्न सकिँदैन।"
+
+msgid "Message cannot be empty."
+msgstr "सन्देश खाली हुन सक्दैन।"
+
+msgid "Message from %(dept)s dept."
+msgstr "%(dept)s विभागबाट सन्देश।"
+
+msgid ""
+"Hi %(name)s,\n"
+"\n"
+"Regarding your complaint '%(title)s':\n"
+"\n"
+"%(message)s\n"
+"\n"
+"View it at: http://localhost:8000%(url)s"
+msgstr ""
+"नमस्ते %(name)s,\n"
+"\n"
+"तपाईंको उजुरी '%(title)s' सम्बन्धमा:\n"
+"\n"
+"%(message)s\n"
+"\n"
+"यहाँ हेर्नुहोस्: http://localhost:8000%(url)s"
+
+msgid "Message sent to author."
+msgstr "लेखकलाई सन्देश पठाइयो।"
+
+msgid "Invalid priority."
+msgstr "अमान्य प्राथमिकता।"
+
+msgid "Priority set to '%(priority)s'."
+msgstr "प्राथमिकता '%(priority)s' मा सेट गरियो।"
+
+msgid "You can only rate your own complaints."
+msgstr "तपाईं आफ्नै उजुरीलाई मात्र मूल्याङ्कन गर्न सक्नुहुन्छ।"
+
+msgid "You can only rate solved complaints."
+msgstr "तपाईं समाधान भएका उजुरीलाई मात्र मूल्याङ्कन गर्न सक्नुहुन्छ।"
+
+msgid "Rating must be between 1 and 5."
+msgstr "मूल्याङ्कन १ र ५ को बीचमा हुनुपर्छ।"
+
+msgid "Thank you for your rating!"
+msgstr "तपाईंको मूल्याङ्कनको लागि धन्यवाद!"
+
+msgid "Only pending complaints can be withdrawn."
+msgstr "विचाराधीन उजुरीहरू मात्र फिर्ता लिन सकिन्छ।"
+
+msgid "Complaint withdrawn successfully."
+msgstr "उजुरी सफलतापूर्वक फिर्ता लिइयो।"
+
+msgid "+ New Complaint "
+msgstr "+ नयाँ उजुरी "
+
+msgid "Admin"
+msgstr "प्रशासक"
+
+msgid "Department admin dashboard"
+msgstr "विभाग प्रशासन ड्यासबोर्ड"
+
+msgid "Change Status"
+msgstr "स्थिति परिवर्तन गर्नुहोस्"
+
+msgid "Note (optional)"
+msgstr "टिप्पणी (वैकल्पिक)"
+
+msgid "e.g. Team dispatched, under review..."
+msgstr "जस्तै: टोली खटाइयो, समीक्षामा..."
+
+msgid "Update"
+msgstr "अपडेट गर्नुहोस्"
+
+msgid "Rejected by department admin."
+msgstr "विभाग प्रशासकद्वारा अस्वीकृत गरियो।"
+
+msgid "Reject this complaint?"
+msgstr "यो उजुरी अस्वीकार गर्ने हो?"
+
+msgid "Reject"
+msgstr "अस्वीकार गर्नुहोस्"
+
+msgid "View →"
+msgstr "हेर्नुहोस् →"
+
+msgid "You haven't posted any complaints yet."
+msgstr "तपाईंले हालसम्म कुनै उजुरी पेश गर्नुभएको छैन।"
+
+msgid "Post Your First Complaint"
+msgstr "आफ्नो पहिलो उजुरी पेश गर्नुहोस्"
+
+msgid "Superadmin Dashboard"
+msgstr "सुपरएडमिन ड्यासबोर्ड"
+
+msgid "All complaints across every department"
+msgstr "सबै विभागका सम्पूर्ण उजुरीहरू"
+
+msgid "Admin Panel →"
+msgstr "एडमिन प्यानल →"
+
+msgid "Department"
+msgstr "विभाग"
+
+msgid "Posted by"
+msgstr "पेश गर्ने"
+
+msgid "Status / Date"
+msgstr "स्थिति / मिति"
+
+msgid "Message"
+msgstr "सन्देश"
+
+msgid "Complaint"
+msgstr "उजुरी"
+
+msgid "%(count)s notification"
+msgid_plural "%(count)s notifications"
+msgstr[0] "%(count)s सूचना"
+msgstr[1] "%(count)s सूचना"
+
+msgid "You don't have any notifications yet."
+msgstr "तपाईंसँग हालसम्म कुनै सूचना छैन।"
+
+msgid "Stay updated with replies, status changes and important announcements."
+msgstr "जवाफ, स्थिति परिवर्तन र महत्त्वपूर्ण घोषणाहरूको जानकारी पाउनुहोस्।"
+
+msgid "Submission Protocols"
+msgstr "दर्ताका नियमहरू"
+
+msgid "Verify the issue falls within municipal jurisdiction."
+msgstr "समस्या नगरपालिकाको कार्यक्षेत्र भित्र पर्छ भन्ने कुरा यकिन गर्नुहोस्।"
+
+msgid "Attach clear, recent photos as evidence."
+msgstr "प्रमाणको रूपमा स्पष्ट र भर्खरै खिचिएका तस्बिरहरू संलग्न गर्नुहोस्।"
+
+msgid "Provide an accurate location for faster routing."
+msgstr "छिटो कारबाहीको लागि सही स्थान (लोकेसन) उपलब्ध गराउनुहोस्।"
+
+msgid "Search existing reports first to avoid duplicate filings."
+msgstr "एउटै समस्या दोहोरिएर दर्ता हुनबाट जोगाउन पहिले नै दर्ता भएका रिपोर्टहरू खोज्नुहोस्।"
+
+msgid "Keep descriptions factual and free of abusive language."
+msgstr "विवरण तथ्यपरक राख्नुहोस् र गालीगलौज वा अभद्र भाषाको प्रयोग नगर्नुहोस्।"
+
+msgid "Trending Threads"
+msgstr "ट्रेन्डिङ छलफलहरू"
+
+msgid "No trending threads yet."
+msgstr "अहिलेसम्म कुनै पनि ट्रेन्डिङ छलफलहरू छैनन्।"

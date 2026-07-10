@@ -1,6 +1,9 @@
-// ── Nagarawa Main JS ──
+// ── Samparka Master JavaScript Engine ──
 
-// Vote handler
+/**
+ * Vote Handler
+ * Integrated seamlessly with the 3-panel component grid system classes.
+ */
 function handleVote(complaintId, value) {
   const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
     || getCookie('csrftoken');
@@ -15,18 +18,22 @@ function handleVote(complaintId, value) {
   })
   .then(r => r.json())
   .then(data => {
+    // Finds the specific complaint card inside the center panel timeline
     const card = document.querySelector(`[data-complaint="${complaintId}"]`);
     if (!card) return;
 
-    const scoreEl = card.querySelector('.vote-score');
-    const upBtn = card.querySelector('.vote-up');
-    const downBtn = card.querySelector('.vote-down');
+    // Matches your updated counter and arrow controls
+    const scoreEl = card.querySelector('.x-pill-vote-counter');
+    const upBtn = card.querySelector('.x-pill-vote-arrow.up');
+    const downBtn = card.querySelector('.x-pill-vote-arrow.down');
 
     if (scoreEl) scoreEl.textContent = data.score;
 
+    // Resets active visual states cleanly
     upBtn?.classList.remove('active-up');
     downBtn?.classList.remove('active-down');
 
+    // Re-applies active colors depending on database state response
     if (data.user_vote === 1) upBtn?.classList.add('active-up');
     if (data.user_vote === -1) downBtn?.classList.add('active-down');
   })
@@ -42,16 +49,29 @@ function getCookie(name) {
   return v;
 }
 
-// Reply toggle
+/**
+ * Reply form visibility toggle
+ */
 function toggleReply(commentId) {
   const form = document.getElementById(`reply-form-${commentId}`);
   if (form) form.classList.toggle('open');
 }
 
-// Auto-dismiss messages
+/**
+ * System alerts auto-dismiss with an added smooth visual fade-out.
+ * Error messages are excluded — they stay on screen until the user
+ * dismisses them manually, since they usually explain why an action
+ * (like starting a conversation) silently failed.
+ */
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.message').forEach(el => {
-    setTimeout(() => el.remove(), 5000);
+    if (el.classList.contains('message-error')) return;
+
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => el.remove(), 300);
+    }, 5000);
   });
 });
 
@@ -97,7 +117,7 @@ function initLocationPicker() {
       .catch(() => {});
   });
 
-  // If values already set (edit mode), place marker
+  // Edit Mode placeholder layout check
   const lat = parseFloat(document.getElementById('id_latitude')?.value);
   const lng = parseFloat(document.getElementById('id_longitude')?.value);
   if (!isNaN(lat) && !isNaN(lng)) {

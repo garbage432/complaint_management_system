@@ -1,16 +1,22 @@
 .footer {
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  padding: 1.25rem 0;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-subtle);
+  padding: 1.25rem 1rem;
   margin-top: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
+
 .footer-inner {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   font-size: 0.85rem;
   color: var(--text-muted);
+  max-width: 1232px;
+  margin: 0 auto;
 }
+
 .footer-note {
   margin-left: auto;
   font-style: italic;

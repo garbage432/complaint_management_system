@@ -1,69 +1,126 @@
-{% extends 'base.html' %}
-{% block title %}Register{% endblock %}
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Account" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Shares core styles seamlessly with login layout */
+  .auth-card-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    padding: 40px 16px;
+    background-color: var(--bg-global);
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background: #ffffff;
+  }
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--text-main);
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-main);
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dcdfe1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent-blue);
+  }
+  .field-errors {
+    color: var(--accent-red);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    list-style: none;
+  }
+  .auth-submit-btn {
+    width: 100%;
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    padding: 12px;
+    border: none;
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 8px;
+  }
+  .auth-submit-btn:hover {
+    background-color: var(--accent-blue-hover);
+  }
+  .auth-footer-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .auth-footer-link a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .auth-footer-link a:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="auth-wrap">
-  <div class="auth-card" style="max-width:520px;">
-    <div class="auth-logo">🏛 Nagarawa</div>
-    <h1 class="auth-title">Create an account</h1>
-    <p class="auth-sub">Join your community complaint platform</p>
-
-    <form method="post">
+<div class="auth-card-container">
+  <div class="auth-card">
+    <h1 class="auth-title">{% trans "Join Samparka Today" %}</h1>
+    
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+
+      {% for field in form %}
         <div class="form-group">
-          <label class="form-label">First Name</label>
-          {{ form.first_name }}
-          {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <!-- Safe assignment rendering check -->
+          <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                 name="{{ field.html_name }}" 
+                 id="{{ field.id_for_label }}" 
+                 class="form-input" 
+                 {% if field.field.required %}required{% endif %}>
+          
+          {% if field.errors %}
+            <ul class="field-errors">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
         </div>
-        <div class="form-group">
-          <label class="form-label">Last Name</label>
-          {{ form.last_name }}
-          {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Username</label>
-        {{ form.username }}
-        {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        {{ form.email }}
-        {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-        <div class="form-group">
-          <label class="form-label">District</label>
-          {{ form.district }}
-        </div>
-        <div class="form-group">
-          <label class="form-label">Ward / Area</label>
-          {{ form.ward }}
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Phone (optional)</label>
-        {{ form.phone }}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        {{ form.password1 }}
-        {% if form.password1.errors %}<div class="form-error">{{ form.password1.errors.0 }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Confirm Password</label>
-        {{ form.password2 }}
-        {% if form.password2.errors %}<div class="form-error">{{ form.password2.errors.0 }}</div>{% endif %}
-      </div>
-      {% if form.non_field_errors %}
-      <div class="form-error" style="margin-bottom:0.75rem;">{{ form.non_field_errors }}</div>
-      {% endif %}
-      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:0.5rem;">Create Account</button>
+      {% endfor %}
+
+      <button type="submit" class="auth-submit-btn">{% trans "Create Account" %}</button>
     </form>
 
-    <div class="auth-footer">
-      Already have an account? <a href="{% url 'accounts:login' %}">Login</a>
+    <div class="auth-footer-link">
+      {% trans "Already have an account?" %} <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
     </div>
   </div>
 </div>
