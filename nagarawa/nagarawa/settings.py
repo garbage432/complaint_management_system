@@ -1,8 +1,13 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 from pathlib import Path
 import os
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(*args, **kwargs):
+        return False
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-change-this-in-production-use-env-var'

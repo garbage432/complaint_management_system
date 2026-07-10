@@ -55,25 +55,21 @@
             <span class="complaint-author-name">{{ complaint.author.display_name }}</span>
             <span class="complaint-timestamp">{{ complaint.created_at|timesince }} ago</span>
           </div>
-<<<<<<< ours
           <span class="footer-action">👁 {{ complaint.view_count }} views</span>
           <span class="footer-action">💬 {{ complaint.comment_count }} comments</span>
-
-<span class="ml-auto" style="display:flex; gap:0.5rem;">
+          <span class="ml-auto" style="display:flex; gap:0.5rem;">
             {% if request.user == complaint.author and complaint.status == 'pending' %}
-              <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="{% url 'complaints:edit' pk=complaint.pk %}" class="btn btn-ghost btn-sm">{% trans "Edit" %}</a>
               <form method="post" action="{% url 'accounts:withdraw_complaint' pk=complaint.pk %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-ghost btn-sm text-danger"
-                        onclick="return confirm('Withdraw this complaint? This cannot be undone.')">Withdraw</button>
+                        onclick="return confirm('Withdraw this complaint? This cannot be undone.')">{% trans "Withdraw" %}</button>
               </form>
             {% endif %}
             {% if user.is_authenticated and not user.is_staff %}
-              <a href="{% url 'messaging:start_for_complaint' complaint_pk=complaint.pk %}" class="btn btn-ghost btn-sm">✉️ Message Staff</a>
+              <a href="{% url 'messaging:start_for_complaint' complaint_pk=complaint.pk %}" class="btn btn-ghost btn-sm">✉️ {% trans "Message Staff" %}</a>
             {% endif %}
           </span>
-=======
->>>>>>> theirs
         </div>
         <span class="status-badge" style="background: #e8f5fe; color: var(--accent-blue);">{{ complaint.get_status_display }}</span>
       </div>
@@ -82,21 +78,19 @@
       <div class="complaint-location" style="margin-top: 12px; font-weight: 600;">📍 {{ complaint.location_name }}</div>
 
       {% if complaint.images.all %}
-      
       <div class="x-detail-gallery" style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px; margin-bottom: 24px;">
-    {% for img in complaint.images.all %}
-      <figure style="margin: 0;">
-        <img src="{{ img.image.url }}" alt="{% trans 'Verification reference' %}"
-             style="width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color); display: block;" />
-        {% if img.caption %}
+        {% for img in complaint.images.all %}
+        <figure style="margin: 0;">
+          <img src="{{ img.image.url }}" alt="{% trans 'Verification reference' %}"
+               style="width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color); display: block;" />
+          {% if img.caption %}
           <figcaption style="font-size: 0.82rem; color: var(--text-muted); margin-top: 6px; padding: 0 2px;">
             {{ img.caption }}
           </figcaption>
-        {% endif %}
-      </figure>
-    {% endfor %}
-</div>
-
+          {% endif %}
+        </figure>
+        {% endfor %}
+      </div>
       {% endif %}
 
       <div id="complaint-map"></div>
@@ -110,45 +104,40 @@
       </div>
     </article>
     <section id="comments">
-     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-color);">
-    <div style="font-weight: 700;">
-        {% trans "Discussion Stream" %}
-    </div>
-
-    {% if user.is_authenticated and complaint.author == user %}
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: var(--bg-subtle); border-bottom: 1px solid var(--border-color);">
+        <div style="font-weight: 700;">{% trans "Discussion Stream" %}</div>
+        {% if user.is_authenticated and complaint.author == user %}
         <a href="{% url 'messaging:start_for_complaint' complaint.pk %}"
            class="x-pill-action-btn" style="margin-left: 16px;">
-            💬 {% trans "Message Department" %}
+          💬 {% trans "Message Department" %}
         </a>
-    {% endif %}
-</div>
-
+        {% endif %}
+      </div>
 
       {% if user.is_authenticated %}
-        <div style="padding: 16px; border-bottom: 1px solid var(--border-color);">
-          <form method="post" action="{% url 'comments:add' complaint.pk %}">
-            {% csrf_token %}
-            <textarea name="body" placeholder="{% trans 'Write a comment...' %}" rows="3" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-family:inherit; font-size:0.92rem; resize:vertical;" required></textarea>
-            <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-              <button type="submit" style="background:var(--accent-blue); color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; cursor:pointer;">{% trans "Post" %}</button>
-            </div>
-          </form>
-        </div>
+      <div style="padding: 16px; border-bottom: 1px solid var(--border-color);">
+        <form method="post" action="{% url 'comments:add' complaint.pk %}">
+          {% csrf_token %}
+          <textarea name="body" placeholder="{% trans 'Write a comment...' %}" rows="3" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-family:inherit; font-size:0.92rem; resize:vertical;" required></textarea>
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <button type="submit" style="background:var(--accent-blue); color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; cursor:pointer;">{% trans "Post" %}</button>
+          </div>
+        </form>
+      </div>
       {% endif %}
-     
 
       {% for comment in complaint.comments.all %}
-        <div class="comment-block">
-          <div style="font-size: 0.88rem; margin-bottom: 4px;">
-            <strong>{{ comment.author.display_name }}</strong> 
-            <span style="color: var(--text-muted);">· {{ comment.created_at|timesince }} ago</span>
-          </div>
-          <p style="font-size: 0.95rem; color: var(--text-main);">{{ comment.body }}</p>
+      <div class="comment-block">
+        <div style="font-size: 0.88rem; margin-bottom: 4px;">
+          <strong>{{ comment.author.display_name }}</strong>
+          <span style="color: var(--text-muted);">· {{ comment.created_at|timesince }} ago</span>
         </div>
+        <p style="font-size: 0.95rem; color: var(--text-main);">{{ comment.body }}</p>
+      </div>
       {% empty %}
-        <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-          {% trans "No responses recorded yet. Start the coordination dialogue stream." %}
-        </div>
+      <div style="padding: 32px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+        {% trans "No responses recorded yet. Start the coordination dialogue stream." %}
+      </div>
       {% endfor %}
     </section>
   </main>
@@ -164,7 +153,6 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-  // Hooks cleanly into the detail map display engine logic from main.js
   document.addEventListener('DOMContentLoaded', () => {
     const lat = parseFloat("{{ complaint.latitude }}");
     const lng = parseFloat("{{ complaint.longitude }}");

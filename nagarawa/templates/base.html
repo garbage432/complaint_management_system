@@ -99,26 +99,16 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-<<<<<<< ours
-<nav class="navbar">
-  <div class="container nav-inner">
-    <a href="{% url 'core:home' %}" class="nav-brand">
-      <span class="brand-icon">🏛</span>
-      <span>Samparka</span>
-    </a>
-=======
-{% get_current_language as CURRENT_LANGUAGE %}
->>>>>>> theirs
+  {% get_current_language as CURRENT_LANGUAGE %}
 
-<div class="x-app-wrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
+  <div class="x-app-wrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
 
-  <!-- Global Platform Header -->
-  <header class="x-global-header">
-    <div class="x-header-inner">
-      
-      <!-- Left Side Brand Anchor Layout element -->
-      <!-- Left Side Brand Anchor Layout element -->
-<a href="{% url 'complaints:feed' %}" class="x-header-brand" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+    <!-- Global Platform Header -->
+    <header class="x-global-header">
+      <div class="x-header-inner">
+        
+        <!-- Left Side Brand Anchor Layout element -->
+        <a href="{% url 'core:home' %}" class="x-header-brand" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
   <img src="/media/complaints/images/nepal-emblem.png" alt="{% trans 'Nepal Emblem' %}" width="24" height="24" style="object-fit: contain;">
   <span class="x-brand-text" style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; color: var(--accent-blue, #1d9bf0);">
     {% if CURRENT_LANGUAGE == 'ne' %}सम्पर्क{% else %}Samparka{% endif %}

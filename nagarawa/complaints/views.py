@@ -14,8 +14,8 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
-from weasyprint import HTML
 from complaints.models import Complaint #watch
+from weasyprint import HTML
 
 
 def feed_view(request):
