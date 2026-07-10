@@ -111,7 +111,6 @@ def superadmin_dashboard(request):
         .exclude(complaint=None)
         .values_list('complaint_id', flat=True)
     )
-
     return render(request, "complaints/superadmin.html", {
         "complaints": complaints.order_by('-created_at'),
         "departments": Department.objects.all(),
