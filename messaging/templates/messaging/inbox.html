@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+{% block title %}{% trans "Messages" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .x-global-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  .x-feed-stream-container {
+    height: calc(100vh - var(--header-h, 60px) - var(--filter-row-h, 64px));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .x-panel-right { height: calc(100vh - var(--header-h, 60px)); overflow-y: auto; overflow-x: hidden; }
+  .x-feed-stream-container::-webkit-scrollbar, .x-panel-right::-webkit-scrollbar { width: 6px; }
+
+  /* ── Conversation list item ── */
+  .x-conv-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color, #eff3f4);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.15s ease;
+  }
+  .x-conv-item:hover { background-color: var(--bg-subtle, #f7f9fa); }
+  .x-conv-item.unread { background-color: #f5faff; }
+  .x-conv-item.unread:hover { background-color: #eef7ff; }
+
+  .x-conv-avatar {
+    min-width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--accent-blue, #1d9bf0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .x-conv-avatar.closed { background: var(--text-muted, #536471); }
+
+  .x-conv-body { flex: 1; min-width: 0; }
+  .x-conv-top-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .x-conv-name { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+  .x-conv-unread-pill {
+    font-size: 0.68rem; font-weight: 700; color: #fff;
+    background: var(--accent-blue, #1d9bf0);
+    padding: 1px 7px; border-radius: 999px;
+  }
+  .x-conv-closed-pill {
+    font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
+    background: var(--bg-subtle, #f7f9fa);
+    border: 1px solid var(--border-color);
+    padding: 1px 7px; border-radius: 999px;
+  }
+  .x-conv-subject { font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-top: 2px; }
+  .x-conv-preview {
+    font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .x-conv-time { font-size: 0.75rem; color: var(--text-muted); flex-shrink: 0; margin-left: 8px; }
+
+  .x-conv-search-row { padding: 10px 16px; border-bottom: 1px solid var(--border-color); }
+  .x-conv-tabs { display: flex; gap: 4px; padding: 8px 16px; border-bottom: 1px solid var(--border-color); }
+  .x-conv-tab {
+    padding: 5px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700;
+    text-decoration: none; color: var(--text-muted); border: 1px solid transparent;
+  }
+  .x-conv-tab.active { background: var(--accent-blue, #1d9bf0); color: #fff; }
+  .x-conv-tab:not(.active):hover { background: var(--bg-subtle); }
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var header = document.querySelector('.x-global-header');
+    var filterRow = document.querySelector('.x-center-filter-row');
+    if (header) document.documentElement.style.setProperty('--header-h', header.offsetHeight + 'px');
+    if (filterRow) document.documentElement.style.setProperty('--filter-row-h', filterRow.offsetHeight + 'px');
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="x-workspace-container">
+
+  <!-- PANEL 1: LEFT SIDEBAR -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        <a href="{% url 'accounts:notifications' %}" class="x-v-link">
+          <span class="x-v-icon">🔔</span>
+          <span class="x-v-label">{% trans "Notifications" %}</span>
+        </a>
+        <a href="{% url 'messaging:inbox' %}" class="x-v-link active">
+          <span class="x-v-icon" style="position:relative;">
+            ✉️
+            {% if total_unread > 0 %}<span class="x-badge-count">{{ total_unread }}</span>{% endif %}
+          </span>
+          <span class="x-v-label">{% trans "Messages" %}</span>
+        </a>
+        <a href="{% url 'accounts:role_redirect' %}" class="x-v-link">
+          <span class="x-v-icon">📊</span>
+          <span class="x-v-label">{% trans "Dashboard" %}</span>
+        </a>
+        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+          <span class="x-v-icon">📂</span>
+          <span class="x-v-label">{% trans "My Complaints" %}</span>
+        </a>
+      </nav>
+
+      {% if user.is_authenticated %}
+        <div style="padding: 0 12px; margin-top: 16px;">
+          <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration: none; text-align: center; display: block;">
+            {% trans "+ File Incident" %}
+          </a>
+        </div>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  <!-- PANEL 2: CONVERSATION LIST -->
+  <main class="x-panel-center" style="border-right: none !important;">
+
+    <div class="x-center-filter-row" style="display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <h2 style="font-size: 1.2rem; font-weight: 800; margin: 0; color: var(--text-main);">
+          💬 {% if is_staff %}{% trans "All Conversations" %}{% else %}{% trans "My Messages" %}{% endif %}
+        </h2>
+        {% if total_unread > 0 %}
+        <span style="font-size: 0.8rem; color: var(--accent-blue);">{{ total_unread }} {% trans "unread" %}</span>
+        {% endif %}
+      </div>
+      {% if not is_staff %}
+      <a href="{% url 'messaging:start' %}" class="x-pill-action-btn active" style="text-decoration:none; padding: 7px 16px;">+ {% trans "New Message" %}</a>
+      {% endif %}
+    </div>
+
+    {% if is_staff %}
+    <div class="x-conv-search-row">
+      <form method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="{% trans 'Search by user or subject...' %}" class="x-feed-filter-input" style="width: 100%;" />
+        <input type="hidden" name="closed" value="{{ filter_closed }}" />
+      </form>
+    </div>
+    <div class="x-conv-tabs">
+      <a href="?closed=0{% if search %}&q={{ search }}{% endif %}" class="x-conv-tab {% if filter_closed != '1' %}active{% endif %}">{% trans "Open" %}</a>
+      <a href="?closed=1{% if search %}&q={{ search }}{% endif %}" class="x-conv-tab {% if filter_closed == '1' %}active{% endif %}">{% trans "Closed" %}</a>
+    </div>
+    {% endif %}
+
+    <div class="x-feed-stream-container">
+      {% for conv in conversations %}
+      <a href="{% url 'messaging:conversation' pk=conv.pk %}" class="x-conv-item {% if conv.unread > 0 %}unread{% endif %}">
+        <div class="x-conv-avatar {% if conv.is_closed %}closed{% endif %}">
+          {% if is_staff %}{{ conv.participant_citizen.username|first|upper }}{% else %}{{ conv.participant_staff.username|first|upper }}{% endif %}
+        </div>
+        <div class="x-conv-body">
+          <div class="x-conv-top-row">
+            <span class="x-conv-name">
+              {% if is_staff %}{{ conv.participant_citizen.display_name }}{% else %}{{ conv.participant_staff.display_name }}{% endif %}
+            </span>
+            {% if not is_staff and conv.participant_staff.userprofile.department %}
+              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">
+                &middot; {{ conv.participant_staff.userprofile.department.icon }} {{ conv.participant_staff.userprofile.department.display_name }}
+              </span>
+            {% endif %}
+            {% if conv.unread > 0 %}<span class="x-conv-unread-pill">{{ conv.unread }}</span>{% endif %}
+            {% if conv.is_closed %}<span class="x-conv-closed-pill">{% trans "Closed" %}</span>{% endif %}
+          </div>
+          <div class="x-conv-subject">{{ conv.subject|default:_("General Enquiry") }}</div>
+          {% if conv.last_msg %}
+          <div class="x-conv-preview">
+            {% if conv.last_msg.sender == request.user %}{% trans "You:" %} {% endif %}{{ conv.last_msg.body }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="x-conv-time">{{ conv.updated_at|naturaltime }}</div>
+      </a>
+      {% empty %}
+      <div style="padding: 64px 16px; text-align: center; color: var(--text-muted);">
+        <div style="font-size: 2.5rem; margin-bottom: 12px;">📭</div>
+        <p style="font-weight: 600;">{% trans "No conversations yet." %}</p>
+        {% if not is_staff %}
+        <a href="{% url 'messaging:start' %}" class="x-pill-action-btn active" style="text-decoration:none; display:inline-block; margin-top: 10px; padding: 7px 16px;">{% trans "Start a conversation" %}</a>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- PANEL 3: RIGHT SIDEBAR -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Messaging" %}</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+          {% trans "Select a conversation to view the full thread and reply directly to the department handling your complaint." %}
+        </p>
+      </section>
+    </div>
+  </aside>
+
+</div>
+{% endblock %}

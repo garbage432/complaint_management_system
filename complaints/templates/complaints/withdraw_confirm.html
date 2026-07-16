@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Withdraw Complaint" %}{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 80px auto; padding: 24px; background: #ffffff; border: 1px solid var(--border-color, #eff3f4); border-radius: 16px; text-align: center;">
+  <div style="font-size: 3rem; margin-bottom: 16px;">⚠️</div>
+  
+  <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
+    {% trans "Withdraw this complaint?" %}
+  </h2>
+  
+  <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;">
+    {% trans "Are you sure you want to withdraw" %} <strong>"{{ complaint.title }}"</strong>? {% trans "This action is final and will move the complaint to a withdrawn status." %}
+  </p>
+
+  <!-- Notice the POST method form here to match your views.py logic -->
+  <form method="post" style="display: flex; gap: 12px; justify-content: center;">
+    {% csrf_token %}
+    <a href="{% url 'complaints:my_complaints' %}" class="x-pill-action-btn" style="border: 1px solid var(--border-color, #eff3f4); padding: 10px 20px; font-weight: 700; text-decoration: none; border-radius: 9999px; background: #fff; color: var(--text-main);">
+      {% trans "No, Keep It" %}
+    </a>
+    <button type="submit" class="x-v-post-btn" style="background-color: var(--accent-red, #f4212e); color: white; padding: 10px 24px; border-radius: 9999px; font-weight: 700; border: none; cursor: pointer;">
+      {% trans "Yes, Withdraw" %}
+    </button>
+  </form>
+</div>
+{% endblock %}
