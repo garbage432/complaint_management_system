@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "New Message" %}{% endblock %}
+{% block extra_head %}
+<style>
+  .x-global-header { position: sticky !important; top: 0 !important; z-index: 1000 !important; }
+  .x-form-card {
+    max-width: 560px;
+    margin: 24px auto;
+    background: #fff;
+    border: 1px solid var(--border-color, #eff3f4);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .x-form-header { padding: 18px 22px; border-bottom: 1px solid var(--border-color, #eff3f4); }
+  .x-form-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main, #0f1419); margin: 0; }
+  .x-form-sub { font-size: 0.85rem; color: var(--text-muted, #536471); margin-top: 4px; }
+  .x-form-body { padding: 20px 22px; }
+  .x-context-banner {
+    background: #e8f5fe; border: 1px solid #cfe9fb; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 0.86rem;
+  }
+  .x-context-banner a { color: var(--accent-blue, #1d9bf0); font-weight: 700; text-decoration: none; }
+  .x-context-banner a:hover { text-decoration: underline; }
+  .x-context-banner.x-banner-error {
+    background: #fdecea; border-color: #f8c9c4; color: #a32620; font-weight: 600;
+  }
+  .x-staff-card {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    padding: 12px; background: var(--bg-subtle, #f7f9fa); border-radius: 10px;
+  }
+  .x-staff-avatar {
+    width: 38px; height: 38px; border-radius: 50%; background: var(--accent-blue, #1d9bf0);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;
+  }
+  .x-staff-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main, #0f1419); }
+  .x-staff-role { font-size: 0.78rem; color: var(--text-muted, #536471); }
+  .x-form-group { margin-bottom: 16px; }
+  .x-form-label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-main, #0f1419); margin-bottom: 6px; }
+  .x-form-group input[type="text"],
+  .x-form-group select,
+  .x-form-group textarea {
+    width: 100%; border: 1px solid var(--border-color, #cfd9de); border-radius: 10px;
+    padding: 10px 14px; font-family: inherit; font-size: 0.9rem; color: var(--text-main, #0f1419);
+    background: var(--bg-subtle, #f7f9fa); transition: border-color 0.15s, background 0.15s;
+    resize: vertical;
+  }
+  .x-form-group input[type="text"]:focus,
+  .x-form-group select:focus,
+  .x-form-group textarea:focus {
+    outline: none; border-color: var(--accent-blue, #1d9bf0); background: #fff;
+  }
+  .x-form-error { font-size: 0.78rem; color: #f4212e; margin-top: 4px; }
+  .x-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+  .x-btn-ghost {
+    padding: 9px 18px; border-radius: 999px; font-size: 0.86rem; font-weight: 700;
+    border: 1px solid var(--border-color, #cfd9de); background: #fff; color: var(--text-main, #0f1419);
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .x-btn-ghost:hover { background: var(--bg-subtle, #f7f9fa); text-decoration: none; }
+  .x-btn-primary {
+    padding: 9px 20px; border-radius: 999px; font-size: 0.86rem; font-weight: 700;
+    border: none; background: var(--accent-blue, #1d9bf0); color: #fff; cursor: pointer;
+  }
+  .x-btn-primary:hover { background: #1a8cd8; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="x-workspace-container">
+  <!-- PANEL 1: LEFT SIDEBAR -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        <a href="{% url 'accounts:notifications' %}" class="x-v-link">
+          <span class="x-v-icon">🔔</span>
+          <span class="x-v-label">{% trans "Notifications" %}</span>
+        </a>
+        <a href="{% url 'messaging:inbox' %}" class="x-v-link active">
+          <span class="x-v-icon">✉️</span>
+          <span class="x-v-label">{% trans "Messages" %}</span>
+        </a>
+        <a href="{% url 'accounts:role_redirect' %}" class="x-v-link">
+          <span class="x-v-icon">📊</span>
+          <span class="x-v-label">{% trans "Dashboard" %}</span>
+        </a>
+        <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+          <span class="x-v-icon">📂</span>
+          <span class="x-v-label">{% trans "My Complaints" %}</span>
+        </a>
+      </nav>
+      {% if user.is_authenticated %}
+        <div style="padding: 0 12px; margin-top: 16px;">
+          <a href="{% url 'complaints:create' %}" class="x-v-post-btn" style="text-decoration: none; text-align: center; display: block;">
+            + {% trans "File Incident" %}
+          </a>
+        </div>
+      {% endif %}
+      {% if user.is_authenticated %}
+      <div class="x-v-profile-anchor">
+        <a href="{% url 'accounts:profile' username=user.username %}" class="x-v-profile-info" style="text-decoration:none;">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="complaint-author-avatar" />
+          {% else %}
+            <span class="complaint-author-avatar">{{ user.username|first|upper }}</span>
+          {% endif %}
+          <div class="x-v-profile-text">
+            <span class="x-v-display-name">{{ user.display_name|default:user.username }}</span>
+            <span class="x-v-username">@{{ user.username }}</span>
+          </div>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="x-v-logout-trigger" title="{% trans 'Log Out' %}" style="text-decoration:none;">🚪</a>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+  <!-- PANEL 2: FORM -->
+  <main class="x-panel-center" style="border-right: none !important; display: block;">
+    <div class="x-form-card">
+      <div class="x-form-header">
+        <h2 class="x-form-title">✉️ {% trans "New Message" %}</h2>
+        <p class="x-form-sub">{% trans "The relevant department admin will respond to your message as soon as possible." %}</p>
+      </div>
+      <div class="x-form-body">
+
+        <!-- Inline, non-auto-dismissing error banner. Global toast in base.html
+             fades after 5s and can be missed; this keeps the reason for a
+             failed submission (e.g. no department admin assigned) visible
+             right next to the form itself. -->
+        {% if messages %}
+          {% for msg in messages %}
+            {% if msg.tags == 'error' %}
+              <div class="x-context-banner x-banner-error">
+                ⚠️ {{ msg }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% if complaint %}
+        <div class="x-context-banner">
+          📋 {% trans "Regarding complaint:" %} <a href="{{ complaint.get_absolute_url }}">{{ complaint.title }}</a>
+          &nbsp;<span class="status-badge status-{{ complaint.status }}" style="font-size:0.7rem; padding:0.15rem 0.5rem;">{{ complaint.get_status_display }}</span>
+        </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+
+          {% if not complaint %}
+          <div class="x-form-group">
+            <label class="x-form-label">{% trans "Department" %} *</label>
+            <select name="department" required>
+              <option value="">{% trans "Select a department..." %}</option>
+              {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if request.POST.department|stringformat:"s" == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.icon }} {{ dept.display_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+          <div class="x-form-group">
+            <label class="x-form-label">{% trans "Subject" %}</label>
+            {{ form.subject }}
+            {% if form.subject.errors %}<div class="x-form-error">{{ form.subject.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="x-form-group">
+            <label class="x-form-label">{% trans "Message" %} *</label>
+            {{ form.body }}
+            {% if form.body.errors %}<div class="x-form-error">{{ form.body.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="x-form-actions">
+            <a href="{% if complaint %}{{ complaint.get_absolute_url }}{% else %}{% url 'complaints:feed' %}{% endif %}" class="x-btn-ghost">{% trans "Cancel" %}</a>
+            <button type="submit" class="x-btn-primary">{% trans "Send Message" %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+  <!-- PANEL 3: RIGHT SIDEBAR -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Messaging" %}</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.45; margin: 0;">
+          {% trans "Messages about a specific complaint are automatically routed to that department's admin." %}
+        </p>
+      </section>
+    </div>
+  </aside>
+</div>
+{% endblock %}

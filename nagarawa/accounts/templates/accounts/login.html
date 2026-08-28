@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Login" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-card-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    padding: 40px 16px;
+    background-color: var(--bg-global);
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background: #ffffff;
+  }
+  .auth-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 24px;
+    text-align: center;
+    color: var(--text-main);
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-main);
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dcdfe1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent-blue);
+  }
+  .auth-submit-btn {
+    width: 100%;
+    background-color: var(--text-main);
+    color: #ffffff;
+    padding: 12px;
+    border: none;
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 8px;
+  }
+  .auth-submit-btn:hover {
+    background-color: #272c30;
+  }
+  .auth-footer-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  .auth-footer-link a {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .auth-footer-link a:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-card-container">
+  <div class="auth-card">
+    <h1 class="auth-title">{% trans "Sign in to Samparka" %}</h1>
+    
+    <form method="post">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div style="color: var(--accent-red); font-size: 0.88rem; margin-bottom: 12px; text-align: center; font-weight: 600;">
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="id_username">{% trans "Username or Email" %}</label>
+        <input type="text" name="username" id="id_username" class="form-input" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="id_password">{% trans "Password" %}</label>
+        <input type="password" name="password" id="id_password" class="form-input" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" class="auth-submit-btn">{% trans "Log In" %}</button>
+    </form>
+
+    <div class="auth-footer-link">
+      {% trans "Don't have an account?" %} <a href="{% url 'accounts:register' %}">{% trans "Sign up" %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

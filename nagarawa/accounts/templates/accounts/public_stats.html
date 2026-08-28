@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Platform Statistics" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .x-global-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  /* Fluid multi-column stat structure engine layout modifiers */
+  .x-stats-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 0 16px;
+  }
+  .x-stats-metric-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #eff3f4);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    min-width: 0;
+  }
+  .x-stats-wrapper-box {
+    background: #ffffff;
+    border: 1px solid var(--border-color, #eff3f4);
+    border-radius: 16px;
+    padding: 16px;
+    margin: 0 16px 24px 16px;
+  }
+  /* Uniform department structural listing items styles */
+  .x-dept-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color, #eff3f4);
+  }
+  .x-dept-stat-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="x-workspace-container">
+
+  <!-- PANEL 1: LEFT SIDEBAR NAVIGATION NAVIGATION LINKAGES -->
+  <aside class="x-panel-left">
+    <div class="x-sticky-scroll-box">
+      <nav class="x-v-nav">
+        <a href="{% url 'complaints:feed' %}" class="x-v-link">
+          <span class="x-v-icon">🏠</span>
+          <span class="x-v-label">{% trans "Feed" %}</span>
+        </a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'complaints:my_complaints' %}" class="x-v-link">
+            <span class="x-v-icon">📂</span>
+            <span class="x-v-label">{% trans "My Workspace" %}</span>
+          </a>
+        {% endif %}
+      </nav>
+    </div>
+  </aside>
+
+  <!-- PANEL 2: CENTER WORKSPACE WORKFLOW CONTROL CONSOLE -->
+  <main class="x-panel-center">
+    
+    <!-- Top Meta Context Platform Header Frame Panel -->
+    <div class="x-center-filter-row" style="position: static; display: flex; flex-direction: column; align-items: flex-start; padding: 16px; gap: 4px;">
+      <h1 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0;">{% trans "Platform Statistics" %}</h1>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">{% trans "Live analytical overview of citizen infrastructure reports across administrative systems." %}</p>
+    </div>
+
+    <!-- Overall Metrics Performance Grid Row Section -->
+    <div class="x-stats-metric-grid" style="margin-top: 4px;">
+      <div class="x-stats-metric-card">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">{% trans "Total Claims" %}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-top: 4px; line-height: 1.2;">{{ total|default:0 }}</div>
+      </div>
+      <div class="x-stats-metric-card">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">{% trans "Pending" %}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #f59e0b; margin-top: 4px; line-height: 1.2;">{{ pending|default:0 }}</div>
+      </div>
+      <div class="x-stats-metric-card">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">{% trans "In Progress" %}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-blue, #1d9bf0); margin-top: 4px; line-height: 1.2;">{{ in_progress|default:0 }}</div>
+      </div>
+      <div class="x-stats-metric-card">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">{% trans "Solved" %}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 4px; line-height: 1.2;">{{ solved|default:0 }}</div>
+      </div>
+      <div class="x-stats-metric-card">
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">{% trans "Solve Rate" %}</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 4px; line-height: 1.2;">{{ solve_rate|default:0 }}%</div>
+      </div>
+    </div>
+
+    <!-- Rating Indicator Banner Component Block -->
+    <div class="x-stats-wrapper-box" style="display: flex; align-items: center; gap: 10px; background: #fff8eb; border-color: #ffe0b2; margin-top: 0; padding: 12px 16px;">
+      <span style="font-size: 1.2rem; line-height: 1;">⭐</span>
+      <div style="font-size: 0.9rem; font-weight: 700; color: #b78103;">
+        {% trans "Average Resolution Rating:" %} <span style="font-size: 1.05rem; font-weight: 800; margin-left: 2px;">{{ avg_rating|default:"0.0" }}</span> / 5
+      </div>
+    </div>
+
+    <!-- Main Section Tabular List Dataset: Sector Metrics Allocation -->
+    <div class="x-stats-wrapper-box">
+      <h2 style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin: 0 0 12px 0; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+        {% trans "Resolution Status Matrix By Department Sector" %}
+      </h2>
+      
+      <div style="display: flex; flex-direction: column;">
+        {% for dept in departments %}
+          <div class="x-dept-stat-row">
+            <!-- Icon Frame component block -->
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--bg-subtle, #f7f9fa); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; border: 1px solid var(--border-color);">
+              {{ dept.icon|default:"📁" }}
+            </div>
+
+            <!-- Context meta description strings metadata processing container -->
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ dept.name }}
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-muted);">
+                {{ dept.total|default:0 }} {% trans "total reports logged" %} &middot; <span style="color: #10b981; font-weight: 600;">{{ dept.solved|default:0 }} {% trans "solved" %}</span>
+              </div>
+            </div>
+
+            <!-- Algorithmic Width Ratio Percentage Load Progress Track component -->
+            <div style="width: 140px; flex-shrink: 0; text-align: right;">
+              <div style="height: 6px; width: 100%; background: var(--border-color, #eff3f4); border-radius: 99px; overflow: hidden; margin-bottom: 4px; border: 1px solid rgba(0,0,0,0.02);">
+                {% if dept.total %}
+                  <div style="height: 100%; width: {% widthratio dept.solved dept.total 100 %}%; background: #10b981; border-radius: 99px; transition: width 0.3s ease;"></div>
+                {% endif %}
+              </div>
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">
+                {% if dept.total %}{% widthratio dept.solved dept.total 100 %}%{% else %}0%{% endif %} {% trans "resolved" %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div style="text-align: center; padding: 32px 0; color: var(--text-muted); font-size: 0.88rem;">
+            {% trans "No department sector administrative track telemetry detected on-system." %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PANEL 3: RIGHT SIDEBAR CONTEXTUAL CONTENT DIRECTORY -->
+  <aside class="x-panel-right">
+    <div class="x-sticky-scroll-box">
+      
+      <!-- System Accountability Verification Integrity Info Card Component Widget -->
+      <section class="x-right-panel-widget">
+        <h4 class="x-widget-panel-title">{% trans "Data Authenticity Statement" %}</h4>
+        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.45; margin: 8px 0 0 0;">
+          {% trans "All diagnostic computations and statistical vectors outputted above are structured directly via authenticated local citizen validation updates across structural telemetry systems." %}
+        </p>
+      </section>
+
+    </div>
+  </aside>
+
+</div>
+{% endblock %}

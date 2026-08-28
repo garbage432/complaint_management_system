@@ -1,4 +1,5 @@
 from django.contrib import admin
+<<<<<<< HEAD
 from django.utils.html import format_html
 from .models import Complaint,Vote, ComplaintImage, StatusLog, InternalNote, ComplaintAssignment, ComplaintRating, Notification
 
@@ -125,3 +126,8 @@ admin.site.register(InternalNote)
 admin.site.register(ComplaintAssignment)
 admin.site.register(ComplaintRating)
 admin.site.register(Notification)
+=======
+from .models import Complaint
+
+admin.site.register(Complaint)
+>>>>>>> 8c142e1c3888d30903d3e352271c439708bfc593

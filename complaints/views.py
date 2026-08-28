@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -239,3 +240,24 @@ def withdraw_complaint(request, pk):
         return redirect('complaints:my_complaints')
 
     return render(request, 'complaints/withdraw_confirm.html', {'complaint': complaint})
+=======
+from django.shortcuts import render, redirect
+from .models import Complaint
+
+def submit_complaint(request):
+    if request.method == "POST":
+        title = request.POST['title']
+        description = request.POST['description']
+        category = request.POST['category']
+
+        complaint = Complaint.objects.create(
+            user=request.user,
+            title=title,
+            description=description,
+            category=category
+        )
+
+        return redirect('complaint_success')
+
+    return render(request, 'submit_complaint.html')
+>>>>>>> 8c142e1c3888d30903d3e352271c439708bfc593

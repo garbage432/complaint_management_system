@@ -1,0 +1,158 @@
+{% load humanize %}
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Incident Report #{{ complaint.id }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 20mm 20mm 20mm 20mm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                color: #657786;
+            }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #14171a;
+            font-size: 10pt;
+            line-height: 1.6;
+        }
+        .meta-header {
+            border-bottom: 2px solid #1d9bf0;
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+        }
+        .report-label {
+            font-size: 8pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #657786;
+        }
+        .incident-title {
+            font-size: 18pt;
+            font-weight: 800;
+            margin: 5px 0;
+            color: #101419;
+        }
+        
+        /* Two column layout specs for printing */
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+        }
+        .info-grid td {
+            padding: 8px 12px;
+            border: 1px solid #eff3f4;
+            vertical-align: top;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #657786;
+            width: 30%;
+            font-size: 9pt;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 8.5pt;
+            font-weight: bold;
+            border-radius: 4px;
+            background-color: #eff3f4;
+            text-transform: uppercase;
+        }
+        
+        /* Section styling */
+        .section-heading {
+            font-size: 12pt;
+            font-weight: 800;
+            border-bottom: 1px solid #cfd9de;
+            padding-bottom: 6px;
+            margin: 25px 0 12px 0;
+            color: #101419;
+        }
+
+        .audit-log-item {
+            border: 1px solid #eff3f4;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #f7f9fa;
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="meta-header">
+        <div class="report-label">{% trans "Official Incident Filing Record" %}</div>
+        <div class="incident-title">{{ complaint.title }}</div>
+        <div style="font-size: 9pt; color: #657786; margin-top: 4px;">
+            {% trans "Filing Reference ID:" %} #{{ complaint.id }} &middot; {% trans "Generated on:" %} {% now "Y-m-d H:i" %}
+        </div>
+    </div>
+
+    <div class="section-heading">{% trans "Core Details" %}</div>
+    <table class="info-grid">
+        <tr>
+            <td class="field-label">{% trans "Current Operational Status" %}</td>
+            <td><span class="status-badge">{{ complaint.get_status_display }}</span></td>
+        </tr>
+        <tr>
+            <td class="field-label">{% trans "Assigned Department" %}</td>
+            <td>{{ complaint.department.name }}</td>
+        </tr>
+        <tr>
+            <td class="field-label">{% trans "Filing Submitter" %}</td>
+            <td>
+                {% if complaint.is_anonymous %}
+                    <strong>{% trans "Anonymous Citizen Report" %}</strong>
+                {% else %}
+                    {{ complaint.author.display_name }} ({{ complaint.author.email|default:"No public email linked" }})
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="field-label">{% trans "Submission Date" %}</td>
+            <td>{{ complaint.created_at|date:"F d, Y — H:i" }}</td>
+        </tr>
+        {% if complaint.location_name %}
+        <tr>
+            <td class="field-label">{% trans "Reported Location Target" %}</td>
+            <td>📍 {{ complaint.location_name }}</td>
+        </tr>
+        {% endif %}
+    </table>
+
+    {% if complaint.description %}
+    <div class="section-heading">{% trans "Incident Description Statement" %}</div>
+    <div style="background: #f7f9fa; border-left: 3px solid #cfd9de; padding: 15px; font-size: 10pt; white-space: pre-wrap;">{{ complaint.description }}</div>
+    {% endif %}
+
+    <div class="section-heading">{% trans "Internal System Modification Lifecycle & Audit History" %}</div>
+    {% if complaint.status_logs.all %}
+        {% for log in complaint.status_logs.all %}
+            <div class="audit-log-item">
+                <div style="display: flex; justify-content: space-between; font-size: 8.5pt; margin-bottom: 4px;">
+                    <strong>🔄 {% trans "Status Transformed To:" %} <span style="text-transform: uppercase;">{{ log.new_status }}</span></strong>
+                    <span style="color: #657786;">{{ log.created_at|date:"Y-m-d H:i" }}</span>
+                </div>
+                {% if log.note %}
+                    <p style="margin: 4px 0 0 0; font-size: 9.5pt; color: #14171a;">{{ log.note }}</p>
+                {% else %}
+                    <p style="margin: 4px 0 0 0; font-size: 9.5pt; color: #657786; font-style: italic;">{% trans "No dispatcher update context appended." %}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #657786; font-style: italic;">{% trans "No internal system modification cycles logged against this case profile." %}</p>
+    {% endif %}
+
+</body>
+</html>
