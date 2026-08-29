@@ -11,6 +11,7 @@ class Complaint(models.Model):
     STATUS_IN_PROGRESS = 'in_progress'
     STATUS_SOLVED = 'solved'
     STATUS_REJECTED = 'rejected'
+    STATUS_WITHDRAWN = 'withdrawn'
 
     STATUS_CHOICES = [
         (STATUS_PENDING, _('Pending')),
@@ -18,6 +19,7 @@ class Complaint(models.Model):
         (STATUS_IN_PROGRESS, _('In Progress')),
         (STATUS_SOLVED, _('Solved')),
         (STATUS_REJECTED, _('Rejected')),
+        (STATUS_WITHDRAWN, _('Withdrawn')),
     ]
 
     STATUS_COLORS = {
@@ -26,7 +28,9 @@ class Complaint(models.Model):
         STATUS_IN_PROGRESS: '#8B5CF6',
         STATUS_SOLVED: '#10B981',
         STATUS_REJECTED: '#EF4444',
+        STATUS_WITHDRAWN: '#6B7280',
     }
+
     PRIORITY_CHOICES = [
         ('low', _('Low')),
         ('medium', _('Medium')),
@@ -130,12 +134,12 @@ class ComplaintImage(models.Model):
 
 
 class StatusLog(models.Model):
-    complaint   = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='status_logs')
-    changed_by  = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
-    old_status  = models.CharField(max_length=20)
-    new_status  = models.CharField(max_length=20)
-    note        = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='status_logs')
+    changed_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
+    old_status = models.CharField(max_length=20)
+    new_status = models.CharField(max_length=20)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -145,9 +149,9 @@ class StatusLog(models.Model):
 
 
 class InternalNote(models.Model):
-    complaint  = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='internal_notes')
-    author     = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
-    body       = models.TextField()
+    complaint = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name='internal_notes')
+    author = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
+    body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -158,21 +162,21 @@ class InternalNote(models.Model):
 
 
 class ComplaintAssignment(models.Model):
-    complaint   = models.OneToOneField(Complaint, on_delete=models.CASCADE, related_name='assignment')
+    complaint = models.OneToOneField(Complaint, on_delete=models.CASCADE, related_name='assignment')
     assigned_to = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='assigned_complaints')
     assigned_by = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, related_name='assignments_made')
-    note        = models.TextField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.complaint} → {self.assigned_to}"
 
 
 class ComplaintRating(models.Model):
-    complaint  = models.OneToOneField(Complaint, on_delete=models.CASCADE, related_name='rating')
-    author     = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
-    stars      = models.PositiveSmallIntegerField()  # 1-5
-    feedback   = models.TextField(blank=True)
+    complaint = models.OneToOneField(Complaint, on_delete=models.CASCADE, related_name='rating')
+    author = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True)
+    stars = models.PositiveSmallIntegerField()  # 1-5
+    feedback = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -180,11 +184,11 @@ class ComplaintRating(models.Model):
 
 
 class Notification(models.Model):
-    recipient  = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')
-    title      = models.CharField(max_length=200)
-    body       = models.TextField()
-    link       = models.CharField(max_length=300, blank=True)
-    is_read    = models.BooleanField(default=False)
+    recipient = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    link = models.CharField(max_length=300, blank=True)
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -192,5 +196,4 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"→ {self.recipient} | {self.title}"
-
 
