@@ -1,7 +1,7 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from django.utils.html import format_html
-from .models import Complaint,Vote, ComplaintImage, StatusLog, InternalNote, ComplaintAssignment, ComplaintRating, Notification
+from .models import Complaint, Vote, ComplaintImage, StatusLog, InternalNote, ComplaintAssignment, ComplaintRating, Notification
+
 
 class ComplaintImageInline(admin.TabularInline):
     model = ComplaintImage
@@ -12,6 +12,7 @@ class ComplaintImageInline(admin.TabularInline):
         if obj.image:
             return format_html('<img src="{}" style="height: 60px; border-radius: 4px;" />', obj.image.url)
         return '-'
+
     image_preview.short_description = 'Preview'
 
 
@@ -72,12 +73,14 @@ class ComplaintAdmin(admin.ModelAdmin):
             'in_progress': '#8B5CF6',
             'solved': '#10B981',
             'rejected': '#EF4444',
+            'withdrawn': '#6B7280',
         }
         color = colors.get(obj.status, '#6B7280')
         return format_html(
             '<span style="background: {}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
             color, obj.get_status_display()
         )
+
     status_badge.short_description = 'Status'
 
     def _change_status(self, request, queryset, new_status):
@@ -96,18 +99,22 @@ class ComplaintAdmin(admin.ModelAdmin):
 
     def mark_verified(self, request, queryset):
         self._change_status(request, queryset, 'verified')
+
     mark_verified.short_description = "Mark as Verified"
 
     def mark_in_progress(self, request, queryset):
         self._change_status(request, queryset, 'in_progress')
+
     mark_in_progress.short_description = "Mark as In Progress"
 
     def mark_solved(self, request, queryset):
         self._change_status(request, queryset, 'solved')
+
     mark_solved.short_description = "Mark as Solved"
 
     def mark_rejected(self, request, queryset):
         self._change_status(request, queryset, 'rejected')
+
     mark_rejected.short_description = "Mark as Rejected"
 
 
@@ -119,15 +126,8 @@ class StatusLogAdmin(admin.ModelAdmin):
     readonly_fields = ['complaint', 'changed_by', 'old_status', 'new_status', 'note', 'created_at']
 
 
-
-
-
 admin.site.register(InternalNote)
 admin.site.register(ComplaintAssignment)
 admin.site.register(ComplaintRating)
 admin.site.register(Notification)
-=======
-from .models import Complaint
 
-admin.site.register(Complaint)
->>>>>>> 8c142e1c3888d30903d3e352271c439708bfc593

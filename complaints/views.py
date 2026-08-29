@@ -1,19 +1,17 @@
-<<<<<<< HEAD
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 from django.core.paginator import Paginator
-from django.utils import timezone
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 from weasyprint import HTML
 
 from .models import Complaint, Vote, ComplaintImage, StatusLog
 from .forms import ComplaintForm, ComplaintFilterForm
-from comments.models import Comment
 from comments.forms import CommentForm
+
 
 def feed_view(request):
     # Fetch complaints, excluding withdrawn ones from the public feed
@@ -30,7 +28,7 @@ def feed_view(request):
         status = form.cleaned_data.get('status')
         sort = form.cleaned_data.get('sort') or '-created_at'
         q = request.GET.get('q', '').strip()
-        
+
         if q:
             complaints = complaints.filter(
                 Q(title__icontains=q) |
@@ -42,7 +40,7 @@ def feed_view(request):
             complaints = complaints.filter(department=dept)
         if status:
             complaints = complaints.filter(status=status)
-        
+
         # Apply sorting dynamic configuration
         complaints = complaints.order_by(sort)
     else:
@@ -80,7 +78,7 @@ def complaint_detail(request, pk):
         Complaint.objects.select_related('author', 'department').prefetch_related('images', 'status_logs__changed_by'),
         pk=pk
     )
-    
+
     if complaint.status == Complaint.STATUS_WITHDRAWN and complaint.author != request.user:
         messages.error(request, _('This complaint has been withdrawn and is no longer public.'))
         return redirect('complaints:feed')
@@ -112,7 +110,7 @@ def complaint_create(request):
 
             # Handle multiple image uploads
             images = request.FILES.getlist('images')
-            for img in images[:5]:  # Max 5 images
+            for img in images[:5]:
                 ComplaintImage.objects.create(complaint=complaint, image=img)
 
             # Create initial status log
@@ -146,9 +144,9 @@ def complaint_edit(request, pk):
             return redirect('complaints:detail', pk=pk)
     else:
         form = ComplaintForm(instance=complaint)
-        
+
     return render(request, 'complaints/create.html', {
-        'form': form, 
+        'form': form,
         'editing': True,
         'complaint': complaint
     })
@@ -160,7 +158,7 @@ def vote_view(request, pk):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
     complaint = get_object_or_404(Complaint, pk=pk)
-    
+
     # Do not allow voting on withdrawn complaints
     if complaint.status == Complaint.STATUS_WITHDRAWN:
         return JsonResponse({'error': 'Cannot vote on a withdrawn complaint'}, status=400)
@@ -204,14 +202,14 @@ def my_complaints(request):
 @login_required
 def export_single_complaint_pdf(request, pk):
     complaint = get_object_or_404(Complaint, pk=pk)
-    
+
     context = {'complaint': complaint}
     html_string = render_to_string('complaints/single_complaint_pdf.html', context, request=request)
-    
+
     response = HttpResponse(content_type='application/pdf')
     safe_title = "".join(c for c in complaint.title if c.isalnum() or c in (' ', '_', '-')).rstrip()
     response['Content-Disposition'] = f'inline; filename="Incident_Report_{complaint.pk}_{safe_title[:20]}.pdf"'
-    
+
     HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(response)
     return response
 
@@ -240,24 +238,4 @@ def withdraw_complaint(request, pk):
         return redirect('complaints:my_complaints')
 
     return render(request, 'complaints/withdraw_confirm.html', {'complaint': complaint})
-=======
-from django.shortcuts import render, redirect
-from .models import Complaint
 
-def submit_complaint(request):
-    if request.method == "POST":
-        title = request.POST['title']
-        description = request.POST['description']
-        category = request.POST['category']
-
-        complaint = Complaint.objects.create(
-            user=request.user,
-            title=title,
-            description=description,
-            category=category
-        )
-
-        return redirect('complaint_success')
-
-    return render(request, 'submit_complaint.html')
->>>>>>> 8c142e1c3888d30903d3e352271c439708bfc593

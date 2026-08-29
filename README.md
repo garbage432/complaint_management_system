@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🏛️ Nagarawa — Civic Complaint Management Platform
 
 A state-level citizen complaint platform built with Django. Users can post complaints by department, vote, comment, and track resolution status. Admins can manage, triage, and update complaints through a powerful admin panel.
@@ -158,6 +157,4 @@ This project uses **Leaflet.js** with **OpenStreetMap tiles** — completely fre
 ---
 
 Built with ❤️ for civic accountability.
-=======
-Let's Start
->>>>>>> 8c142e1c3888d30903d3e352271c439708bfc593
+
